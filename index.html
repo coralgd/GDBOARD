@@ -7,25 +7,39 @@
 </head>
 <body>
 
-<!-- ФОН -->
-<canvas id="gridCanvas"></canvas>
+<canvas id="bg"></canvas>
 
-<h1>GDBOARD</h1>
+<div class="panel">
+  <h1>GDBOARD</h1>
 
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Пароль">
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Пароль">
+  <input id="username" placeholder="Username">
 
-<div>
   <button onclick="register()">Регистрация</button>
   <button onclick="login()">Вход</button>
+
+  <button id="checkBtn" onclick="checkAdmin()">Проверить</button>
+
+  <a href="board.html" class="link">🏆 Таблица лидеров</a>
+
+  <p id="status"></p>
+
+  <div id="elderPanel" class="hidden">
+    <h3>ELDER MODERATOR</h3>
+    <div id="userList"></div>
+  </div>
 </div>
 
-<!-- КНОПКА АДМИНА -->
-<button id="adminBtn" onclick="becomeAdmin()" style="display:none">
-  Получить права администратора
-</button>
+<div id="modal" class="modal hidden">
+  <div class="modal-box">
+    <p id="modalText"></p>
+    <button id="confirmBtn" class="hidden" onclick="confirmAdmin()">Подтвердить</button>
+    <button onclick="closeModal()">Закрыть</button>
+  </div>
+</div>
 
 <script type="module" src="app.js"></script>
-<script src="canvas.js"></script>
+<script src="bg.js"></script>
 </body>
 </html>
