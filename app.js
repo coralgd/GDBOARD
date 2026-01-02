@@ -10,12 +10,9 @@ import {
   doc,
   setDoc,
   getDoc,
-  updateDoc,
-  collection,
-  getDocs
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* Firebase config */
 const firebaseConfig = {
   apiKey: "AIzaSyDin9IH2dxOjj-VqYDQnIZzC47R0y4N0tg",
   authDomain: "gdboardcoral.firebaseapp.com",
@@ -33,40 +30,34 @@ const db = getFirestore();
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const status = document.getElementById("status");
+const pointsEl = document.getElementById("points");
 
-let currentUser;
+let currentUser, userData;
 
-/* Следим за авторизацией */
 onAuthStateChanged(auth, async user => {
   if (!user) return;
+
   currentUser = user;
-
   const snap = await getDoc(doc(db, "users", user.uid));
-  if (!snap.exists()) return;
+  userData = snap.data();
+  if (!userData) return;
 
-  const userData = snap.data();
-  status.textContent = `Вы вошли как ${userData.email || user.email}, очки: ${userData.points || 0}`;
+  status.textContent = `Вы вошли как ${user.email}`;
+  pointsEl.textContent = userData.points || 0;
 });
 
 /* Регистрация */
 window.register = async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
-
-  if (!email || !password) {
-    alert("Введите Email и пароль");
-    return;
-  }
+  if (!email || !password) return alert("Введите email и пароль");
 
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, "users", cred.user.uid), {
-      email: email,
-      points: 0
-    });
+    await setDoc(doc(db, "users", cred.user.uid), { points: 0 });
     alert("Аккаунт создан");
-  } catch (e) {
-    alert("Ошибка регистрации: " + e.message);
+  } catch(e) {
+    alert("Ошибка регистрации: "+e.message);
   }
 };
 
@@ -74,15 +65,21 @@ window.register = async () => {
 window.login = async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
-
-  if (!email || !password) {
-    alert("Введите Email и пароль");
-    return;
-  }
+  if (!email || !password) return alert("Введите email и пароль");
 
   try {
     await signInWithEmailAndPassword(auth, email, password);
-  } catch (e) {
-    alert("Ошибка входа: " + e.message);
+  } catch(e) {
+    alert("Ошибка входа: "+e.message);
   }
+};
+
+/* Начисление очков */
+window.addPoints = async (amount) => {
+  if (!currentUser) return alert("Сначала войдите");
+  const ref = doc(db, "users", currentUser.uid);
+  const snap = await getDoc(ref);
+  const currentPoints = snap.data().points || 0;
+  await updateDoc(ref, { points: currentPoints + amount });
+  pointsEl.textContent = currentPoints + amount;
 };
