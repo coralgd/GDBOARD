@@ -1,34 +1,34 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDin9IH2dxOjj-VqYDQnIZzC47R0y4N0tg",
   authDomain: "gdboardcoral.firebaseapp.com",
-  projectId: "gdboardcoral"
+  projectId: "gdboardcoral",
+  storageBucket: "gdboardcoral.firebasestorage.app",
+  messagingSenderId: "771826157258",
+  appId: "1:771826157258:web:928039314035558a9b5633"
 };
 
 initializeApp(firebaseConfig);
 const db = getFirestore();
 
-async function loadBoard() {
-  const snap = await getDocs(collection(db, "users"));
-  const users = [];
+const leaderboard = document.getElementById("leaderboard");
 
+async function loadLeaderboard() {
+  const q = query(collection(db, "users"));
+  const snap = await getDocs(q);
+
+  let users = [];
   snap.forEach(d => users.push(d.data()));
-  users.sort((a, b) => b.points - a.points);
 
-  leaderboard.innerHTML = "";
+  users.sort((a,b) => (b.points||0) - (a.points||0));
 
-  users.forEach((u, i) => {
-    const div = document.createElement("div");
-    div.className = "row " + (i < 3 ? "top" + (i + 1) : "");
-    div.innerHTML = `
-      <span>#${i + 1}</span>
-      <span>${u.username}</span>
-      <span>${u.points}</span>
-    `;
-    leaderboard.appendChild(div);
-  });
+  leaderboard.innerHTML = users.map(u => `<p>${u.username} — ${u.points || 0} очков</p>`).join("");
 }
 
-loadBoard();
+loadLeaderboard();
+
+window.goBack = () => {
+  window.location.href = "index.html";
+};
