@@ -4,50 +4,48 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let particles = [];
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  initIcons();
+});
 
-function initParticles(){
-  particles = [];
-  for(let i=0;i<100;i++){
-    particles.push({
+let icons = [];
+
+function initIcons() {
+  icons = [];
+  const colors = ["#00ffff","#ff00ff","#ffff00","#00ff00","#ff5500"];
+  for(let i=0;i<50;i++){
+    icons.push({
       x: Math.random()*canvas.width,
       y: Math.random()*canvas.height,
-      size: Math.random()*3+1,
-      speedX: Math.random()*2-1,
-      speedY: Math.random()*2-1,
-      color: `hsl(${Math.random()*360},100%,50%)`
+      size: Math.random()*30+20,
+      speed: Math.random()*2+1,
+      color: colors[Math.floor(Math.random()*colors.length)]
     });
   }
 }
 
-initParticles();
+initIcons();
 
-window.addEventListener("resize", ()=>{
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  initParticles();
-});
-
-function animate(){
+function draw() {
   ctx.fillStyle = "#111";
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  particles.forEach(p=>{
-    p.x += p.speedX;
-    p.y += p.speedY;
+  icons.forEach(icon=>{
+    icon.y += icon.speed;
+    if(icon.y>canvas.height) icon.y=-icon.size;
 
-    if(p.x<0) p.x=canvas.width;
-    if(p.x>canvas.width) p.x=0;
-    if(p.y<0) p.y=canvas.height;
-    if(p.y>canvas.height) p.y=0;
+    ctx.fillStyle = icon.color;
+    // рисуем кубик, как GD иконка
+    ctx.fillRect(icon.x, icon.y, icon.size, icon.size);
 
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
-    ctx.fill();
+    // можно добавить глаз или градиент для шарма GD
+    ctx.strokeStyle = "#000";
+    ctx.strokeRect(icon.x, icon.y, icon.size, icon.size);
   });
 
-  requestAnimationFrame(animate);
+  requestAnimationFrame(draw);
 }
 
-animate();
+draw();
