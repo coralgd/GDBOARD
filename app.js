@@ -29,59 +29,76 @@ initializeApp(firebaseConfig);
 const auth = getAuth();
 const db = getFirestore();
 
+/* HTML элементы */
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
-const usernameInput = document.getElementById("username");
 const status = document.getElementById("status");
+
+const usernamePanel = document.getElementById("usernamePanel");
+const usernameInput = document.getElementById("usernameInput");
+
 const elderPanel = document.getElementById("elderPanel");
 const userList = document.getElementById("userList");
 
 let currentUser, userData;
 
+/* Следим за авторизацией */
 onAuthStateChanged(auth, async user => {
   if (!user) return;
 
   currentUser = user;
+
   const snap = await getDoc(doc(db, "users", user.uid));
   userData = snap.data();
 
-  status.textContent = `Вы вошли как ${userData.username} (${userData.role})`;
+  // Если Username ещё нет — показываем панель выбора
+  if (!userData || !userData.username) {
+    usernamePanel.classList.remove("hidden");
+    status.textContent = "Выберите Username";
+  } else {
+    usernamePanel.classList.add("hidden");
+    status.textContent = `Вы вошли как ${userData.username} (${userData.role})`;
+  }
 
-  if (userData.role === "elder_moderator") {
+  // Elder moderator видит панель
+  if (userData && userData.role === "elder_moderator") {
     elderPanel.classList.remove("hidden");
     loadUsers();
   }
 });
 
+/* Регистрация только Email + пароль */
 window.register = async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
-  const username = usernameInput.value.trim();
 
-  if (!email || !password || !username) {
-    alert("Заполните все поля");
+  if (!email || !password) {
+    alert("Введите Email и пароль");
     return;
   }
 
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+    // Сразу создаём запись в Firestore без username
     await setDoc(doc(db, "users", cred.user.uid), {
-      username: username,
       role: "user",
       points: 0
     });
-    alert("Аккаунт создан");
+
+    alert("Аккаунт создан. Войдите, чтобы выбрать Username.");
   } catch (e) {
     alert("Ошибка регистрации: " + e.message);
   }
 };
 
+/* Вход только Email + пароль */
 window.login = async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
 
   if (!email || !password) {
-    alert("Введите email и пароль");
+    alert("Введите Email и пароль");
     return;
   }
 
@@ -92,6 +109,23 @@ window.login = async () => {
   }
 };
 
+/* Подтверждение Username при первом входе */
+window.setUsername = async () => {
+  const uname = usernameInput.value.trim();
+  if (!uname) {
+    alert("Введите Username");
+    return;
+  }
+
+  await updateDoc(doc(db, "users", currentUser.uid), {
+    username: uname
+  });
+
+  usernamePanel.classList.add("hidden");
+  status.textContent = `Вы вошли как ${uname} (${userData.role || "user"})`;
+};
+
+/* Elder Moderator функции */
 async function loadUsers() {
   const snap = await getDocs(collection(db, "users"));
   userList.innerHTML = "";
@@ -101,7 +135,7 @@ async function loadUsers() {
     const div = document.createElement("div");
     div.className = "userRow";
     div.innerHTML = `
-      <span>${u.username} — ${u.points || 0} очков</span>
+      <span>${u.username || "Без имени"} — ${u.points || 0} очков</span>
       ${userData.role === "elder_moderator" || userData.role === "moderator" ? `
       <button onclick="addPoints('${d.id}',10)">+10</button>
       <button onclick="addPoints('${d.id}',-10)">-10</button>
