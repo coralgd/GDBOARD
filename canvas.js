@@ -2,52 +2,58 @@ const canvas = document.getElementById("gridCanvas");
 const ctx = canvas.getContext("2d");
 
 function resize() {
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 }
 resize();
-addEventListener("resize", resize);
+window.addEventListener("resize", resize);
 
-const stars = [];
-const STAR_COUNT = 400;
+const particles = [];
+const COUNT = 160;
 
-for (let i = 0; i < STAR_COUNT; i++) {
-  stars.push({
-    x: Math.random() * canvas.width - canvas.width / 2,
-    y: Math.random() * canvas.height - canvas.height / 2,
-    z: Math.random() * canvas.width
-  });
+for (let i = 0; i < COUNT; i++) {
+  particles.push(createParticle());
+}
+
+function createParticle() {
+  return {
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    vx: -0.5 + Math.random(),
+    vy: -0.5 + Math.random(),
+    size: 1 + Math.random() * 2,
+    alpha: 0.3 + Math.random() * 0.7
+  };
 }
 
 function draw() {
-  ctx.fillStyle = "rgba(5,5,16,0.4)";
+  // мягкое затухание (НЕ мигание)
+  ctx.fillStyle = "rgba(6, 10, 20, 0.25)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.translate(canvas.width / 2, canvas.height / 2);
-
-  for (const s of stars) {
-    s.z -= 15;
-
-    if (s.z < 1) {
-      s.z = canvas.width;
-      s.x = Math.random() * canvas.width - canvas.width / 2;
-      s.y = Math.random() * canvas.height - canvas.height / 2;
-    }
-
-    const k = 128 / s.z;
-    const px = s.x * k;
-    const py = s.y * k;
-
-    ctx.strokeStyle = "#00cfff";
-    ctx.lineWidth = 2;
-
+  for (const p of particles) {
+    ctx.fillStyle = `rgba(0, 200, 255, ${p.alpha})`;
     ctx.beginPath();
-    ctx.moveTo(px, py);
-    ctx.lineTo(px * 1.1, py * 1.1);
-    ctx.stroke();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    p.x += p.vx;
+    p.y += p.vy;
+
+    // лёгкое «течение»
+    p.vx += (Math.random() - 0.5) * 0.05;
+    p.vy += (Math.random() - 0.5) * 0.05;
+
+    // ограничение скорости
+    p.vx = Math.max(-1.2, Math.min(1.2, p.vx));
+    p.vy = Math.max(-1.2, Math.min(1.2, p.vy));
+
+    // возврат если улетела
+    if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+      Object.assign(p, createParticle());
+    }
   }
 
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
   requestAnimationFrame(draw);
 }
 
