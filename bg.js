@@ -4,48 +4,51 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-window.addEventListener("resize", () => {
+let grid = {
+  size: 50,  // размер клеток
+  offsetX: 0,
+  offsetY: 0,
+  speed: 1
+};
+
+window.addEventListener("resize", ()=>{
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  initIcons();
 });
 
-let icons = [];
-
-function initIcons() {
-  icons = [];
-  const colors = ["#00ffff","#ff00ff","#ffff00","#00ff00","#ff5500"];
-  for(let i=0;i<50;i++){
-    icons.push({
-      x: Math.random()*canvas.width,
-      y: Math.random()*canvas.height,
-      size: Math.random()*30+20,
-      speed: Math.random()*2+1,
-      color: colors[Math.floor(Math.random()*colors.length)]
-    });
-  }
-}
-
-initIcons();
-
-function draw() {
+function drawGrid(){
   ctx.fillStyle = "#111";
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  icons.forEach(icon=>{
-    icon.y += icon.speed;
-    if(icon.y>canvas.height) icon.y=-icon.size;
+  ctx.strokeStyle = "cyan";
+  ctx.lineWidth = 1;
 
-    ctx.fillStyle = icon.color;
-    // рисуем кубик, как GD иконка
-    ctx.fillRect(icon.x, icon.y, icon.size, icon.size);
+  const diag = Math.sqrt(canvas.width**2 + canvas.height**2);
 
-    // можно добавить глаз или градиент для шарма GD
-    ctx.strokeStyle = "#000";
-    ctx.strokeRect(icon.x, icon.y, icon.size, icon.size);
-  });
+  // смещение для движения
+  grid.offsetX += grid.speed;
+  grid.offsetY += grid.speed;
 
-  requestAnimationFrame(draw);
+  ctx.save();
+  ctx.translate(-grid.offsetX, -grid.offsetY);
+  ctx.rotate(Math.PI/4);
+
+  for(let x=-diag; x<diag; x+=grid.size){
+    ctx.beginPath();
+    ctx.moveTo(x, -diag);
+    ctx.lineTo(x, diag);
+    ctx.stroke();
+  }
+
+  for(let y=-diag; y<diag; y+=grid.size){
+    ctx.beginPath();
+    ctx.moveTo(-diag, y);
+    ctx.lineTo(diag, y);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+  requestAnimationFrame(drawGrid);
 }
 
-draw();
+drawGrid();
