@@ -29,6 +29,13 @@ initializeApp(firebaseConfig);
 const auth = getAuth();
 const db = getFirestore();
 
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const usernameInput = document.getElementById("username");
+const status = document.getElementById("status");
+const elderPanel = document.getElementById("elderPanel");
+const userList = document.getElementById("userList");
+
 let currentUser, userData;
 
 onAuthStateChanged(auth, async user => {
@@ -46,14 +53,20 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
-/* Регистрация */
 window.register = async () => {
-  if (!email.value || !password.value || !username.value) return alert("Заполните все поля");
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+  const username = usernameInput.value.trim();
+
+  if (!email || !password || !username) {
+    alert("Заполните все поля");
+    return;
+  }
 
   try {
-    const cred = await createUserWithEmailAndPassword(auth, email.value, password.value);
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, "users", cred.user.uid), {
-      username: username.value,
+      username: username,
       role: "user",
       points: 0
     });
@@ -63,18 +76,22 @@ window.register = async () => {
   }
 };
 
-/* Вход */
 window.login = async () => {
-  if (!email.value || !password.value) return alert("Введите email и пароль");
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!email || !password) {
+    alert("Введите email и пароль");
+    return;
+  }
 
   try {
-    await signInWithEmailAndPassword(auth, email.value, password.value);
+    await signInWithEmailAndPassword(auth, email, password);
   } catch (e) {
     alert("Ошибка входа: " + e.message);
   }
 };
 
-/* Elder moderator панель */
 async function loadUsers() {
   const snap = await getDocs(collection(db, "users"));
   userList.innerHTML = "";
@@ -94,13 +111,11 @@ async function loadUsers() {
   });
 }
 
-/* Назначить модератора */
 window.makeModerator = async uid => {
   await updateDoc(doc(db, "users", uid), { role: "moderator" });
   loadUsers();
 };
 
-/* Начисление очков */
 window.addPoints = async (uid, amount) => {
   const userRef = doc(db, "users", uid);
   const snap = await getDoc(userRef);
