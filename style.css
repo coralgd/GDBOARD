@@ -1,0 +1,35 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #050510;
+  color: #00cfff;
+  text-align: center;
+  overflow: hidden;
+}
+
+canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+
+input, button {
+  padding: 10px 15px;
+  margin: 10px;
+  background: rgba(0,0,0,0.4);
+  border: 2px solid #00cfff;
+  color: #00cfff;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+button:hover {
+  background: #00cfff;
+  color: #050510;
+  cursor: pointer;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
