@@ -1,30 +1,62 @@
-body {
+/* Центрируем всё по экрану */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
   font-family: Arial, sans-serif;
-  background: #111;
-  color: #eee;
+  overflow: hidden;
+}
+
+body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  background: #111;
+  color: #eee;
+  position: relative;
+}
+
+#bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .panel {
+  position: relative;
+  z-index: 1;
   background: rgba(0,0,0,0.7);
-  padding: 20px;
-  border-radius: 10px;
+  padding: 30px;
+  border-radius: 15px;
   text-align: center;
-  width: 300px;
+  width: 350px;
+  box-shadow: 0 0 20px cyan;
 }
 
 input {
   display: block;
   margin: 10px auto;
   width: 80%;
-  padding: 5px;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
 }
 
 button, .link {
   margin: 5px;
-  padding: 5px 10px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
+  background: cyan;
+  color: #111;
+  font-weight: bold;
+}
+
+button:hover, .link:hover {
+  background: #00ffffaa;
 }
