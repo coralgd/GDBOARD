@@ -1,31 +1,29 @@
 const canvas = document.getElementById("bg");
 const ctx = canvas.getContext("2d");
 
-function resize() {
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let lines = [];
+for(let i=0;i<30;i++){
+  lines.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, speed: Math.random()*1+0.5});
 }
-resize();
-addEventListener("resize", resize);
 
-let t = 0;
+function animate(){
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
-function draw() {
-  ctx.fillStyle = "#05070d";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.strokeStyle = "rgba(0,200,255,0.45)";
-  ctx.lineWidth = 2;
-
-  for (let i = 0; i < 50; i++) {
+  ctx.strokeStyle = "cyan";
+  lines.forEach(l=>{
+    l.y += l.speed;
+    if(l.y>canvas.height) l.y=0;
     ctx.beginPath();
-    const y = i * 35 + (t % 35);
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y - 80);
+    ctx.moveTo(l.x,l.y);
+    ctx.lineTo(l.x+50,l.y+50);
     ctx.stroke();
-  }
+  });
 
-  t += 1.4;
-  requestAnimationFrame(draw);
+  requestAnimationFrame(animate);
 }
-draw();
+
+animate();
