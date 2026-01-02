@@ -4,52 +4,50 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-window.addEventListener("resize", () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  initLines();
-});
+let particles = [];
 
-let lines = [];
-
-function initLines() {
-  lines = [];
-  for (let i = 0; i < 50; i++) {
-    lines.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      length: Math.random() * 150 + 50,
-      speed: Math.random() * 2 + 1,
-      angle: Math.random() * Math.PI / 3 - Math.PI / 6
+function initParticles(){
+  particles = [];
+  for(let i=0;i<100;i++){
+    particles.push({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      size: Math.random()*3+1,
+      speedX: Math.random()*2-1,
+      speedY: Math.random()*2-1,
+      color: `hsl(${Math.random()*360},100%,50%)`
     });
   }
 }
 
-initLines();
+initParticles();
 
-function draw() {
+window.addEventListener("resize", ()=>{
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  initParticles();
+});
+
+function animate(){
   ctx.fillStyle = "#111";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  ctx.strokeStyle = "cyan";
-  ctx.lineWidth = 2;
+  particles.forEach(p=>{
+    p.x += p.speedX;
+    p.y += p.speedY;
 
-  lines.forEach(l => {
-    l.x -= Math.cos(l.angle) * l.speed;
-    l.y += Math.sin(l.angle) * l.speed;
+    if(p.x<0) p.x=canvas.width;
+    if(p.x>canvas.width) p.x=0;
+    if(p.y<0) p.y=canvas.height;
+    if(p.y>canvas.height) p.y=0;
 
+    ctx.fillStyle = p.color;
     ctx.beginPath();
-    ctx.moveTo(l.x, l.y);
-    ctx.lineTo(l.x + Math.cos(l.angle) * l.length, l.y - Math.sin(l.angle) * l.length);
-    ctx.stroke();
-
-    if (l.x < -l.length || l.y > canvas.height + l.length) {
-      l.x = canvas.width + Math.random() * 100;
-      l.y = -Math.random() * 100;
-    }
+    ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+    ctx.fill();
   });
 
-  requestAnimationFrame(draw);
+  requestAnimationFrame(animate);
 }
 
-draw();
+animate();
