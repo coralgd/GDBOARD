@@ -15,7 +15,6 @@ import {
   getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* Firebase config */
 const firebaseConfig = {
   apiKey: "AIzaSyDin9IH2dxOjj-VqYDQnIZzC47R0y4N0tg",
   authDomain: "gdboardcoral.firebaseapp.com",
@@ -32,7 +31,6 @@ const db = getFirestore();
 
 let currentUser, userData;
 
-/* Авторизация и проверка ролей */
 onAuthStateChanged(auth, async user => {
   if (!user) return;
 
@@ -42,15 +40,9 @@ onAuthStateChanged(auth, async user => {
 
   status.textContent = `Вы вошли как ${userData.username} (${userData.role})`;
 
-  // Elder moderator видит панель
   if (userData.role === "elder_moderator") {
     elderPanel.classList.remove("hidden");
     loadUsers();
-  }
-
-  // Проверка кнопки "Проверить" для обычного пользователя
-  if (localStorage.getItem("GDBOARD_CHECK_USED")) {
-    checkBtn.remove();
   }
 });
 
@@ -82,33 +74,6 @@ window.login = async () => {
   }
 };
 
-/* Кнопка "Проверить" */
-window.checkAdmin = () => {
-  if (!userData) return;
-
-  modal.classList.remove("hidden");
-
-  if (userData.role === "user") {
-    modalText.textContent = "Не найдено";
-    confirmBtn.classList.add("hidden");
-  } else {
-    modalText.textContent = "Найдено";
-    confirmBtn.classList.remove("hidden");
-  }
-};
-
-/* Подтвердить и стать модератором */
-window.confirmAdmin = async () => {
-  await updateDoc(doc(db, "users", currentUser.uid), { role: "moderator" });
-  localStorage.setItem("GDBOARD_CHECK_USED", "1");
-  checkBtn.remove();
-  closeModal();
-  location.reload();
-};
-
-/* Закрыть модальное окно */
-window.closeModal = () => modal.classList.add("hidden");
-
 /* Elder moderator панель */
 async function loadUsers() {
   const snap = await getDocs(collection(db, "users"));
@@ -116,20 +81,30 @@ async function loadUsers() {
 
   snap.forEach(d => {
     const u = d.data();
-    if (u.role === "user") {
-      const div = document.createElement("div");
-      div.className = "userRow";
-      div.innerHTML = `
-        <span>${u.username}</span>
-        <button onclick="makeModerator('${d.id}')">Сделать модератором</button>
-      `;
-      userList.appendChild(div);
-    }
+    const div = document.createElement("div");
+    div.className = "userRow";
+    div.innerHTML = `
+      <span>${u.username} — ${u.points || 0} очков</span>
+      ${userData.role === "elder_moderator" || userData.role === "moderator" ? `
+      <button onclick="addPoints('${d.id}',10)">+10</button>
+      <button onclick="addPoints('${d.id}',-10)">-10</button>
+      <button onclick="makeModerator('${d.id}')">Сделать модератором</button>` : ""}
+    `;
+    userList.appendChild(div);
   });
 }
 
 /* Назначить модератора */
 window.makeModerator = async uid => {
   await updateDoc(doc(db, "users", uid), { role: "moderator" });
+  loadUsers();
+};
+
+/* Начисление очков */
+window.addPoints = async (uid, amount) => {
+  const userRef = doc(db, "users", uid);
+  const snap = await getDoc(userRef);
+  const currentPoints = snap.data().points || 0;
+  await updateDoc(userRef, { points: currentPoints + amount });
   loadUsers();
 };
