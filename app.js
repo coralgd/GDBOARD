@@ -9,8 +9,7 @@ import {
   getFirestore,
   doc,
   setDoc,
-  getDoc,
-  updateDoc
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -30,7 +29,6 @@ const db = getFirestore();
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const status = document.getElementById("status");
-const pointsEl = document.getElementById("points");
 
 let currentUser, userData;
 
@@ -42,8 +40,7 @@ onAuthStateChanged(auth, async user => {
   userData = snap.data();
   if (!userData) return;
 
-  status.textContent = `Вы вошли как ${user.email}`;
-  pointsEl.textContent = userData.points || 0;
+  status.textContent = `Вы вошли как ${user.email}, очки: ${userData.points || 0}`;
 });
 
 /* Регистрация */
@@ -72,14 +69,4 @@ window.login = async () => {
   } catch(e) {
     alert("Ошибка входа: "+e.message);
   }
-};
-
-/* Начисление очков */
-window.addPoints = async (amount) => {
-  if (!currentUser) return alert("Сначала войдите");
-  const ref = doc(db, "users", currentUser.uid);
-  const snap = await getDoc(ref);
-  const currentPoints = snap.data().points || 0;
-  await updateDoc(ref, { points: currentPoints + amount });
-  pointsEl.textContent = currentPoints + amount;
 };
