@@ -29,18 +29,20 @@ const db = getFirestore();
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const status = document.getElementById("status");
+const pointsEl = document.getElementById("points");
 
-let currentUser, userData;
+let currentUser;
 
 onAuthStateChanged(auth, async user => {
   if (!user) return;
 
   currentUser = user;
   const snap = await getDoc(doc(db, "users", user.uid));
-  userData = snap.data();
-  if (!userData) return;
+  if (!snap.exists()) return;
 
-  status.textContent = `Вы вошли как ${user.email}, очки: ${userData.points || 0}`;
+  const userData = snap.data();
+  status.textContent = `Вы вошли как ${user.email}`;
+  pointsEl.textContent = `Очки: ${userData.points || 0}`;
 });
 
 /* Регистрация */
