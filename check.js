@@ -1,8 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* Firebase config */
 const firebaseConfig = {
   apiKey: "AIzaSyDin9IH2dxOjj-VqYDQnIZzC47R0y4N0tg",
   authDomain: "gdboardcoral.firebaseapp.com",
@@ -41,14 +40,12 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
-/* Подтвердить и стать модератором */
 confirmBtn.onclick = async () => {
   await updateDoc(doc(db, "users", currentUser.uid), { role: "moderator" });
   confirmBtn.classList.add("hidden");
   checkText.textContent = "Вы теперь модератор!";
 };
 
-/* Назад */
 window.goBack = () => {
   window.location.href = "index.html";
 };
