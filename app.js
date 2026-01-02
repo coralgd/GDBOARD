@@ -11,14 +11,11 @@ import {
   setDoc,
   getDoc,
   updateDoc,
-  increment,
   collection,
-  query,
-  orderBy,
   getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* ===== FIREBASE CONFIG ===== */
+/* Firebase config */
 const firebaseConfig = {
   apiKey: "AIzaSyDin9IH2dxOjj-VqYDQnIZzC47R0y4N0tg",
   authDomain: "gdboardcoral.firebaseapp.com",
@@ -29,113 +26,106 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const auth = getAuth();
+const db = getFirestore();
 
-/* ===== CONSTANTS ===== */
-const ADMIN_FLAG = "GDBOARD_ADMIN_USED";
+let currentUser = null;
+let userData = null;
 
-/* ===== AUTH ===== */
-window.register = async () => {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-
-  if (!email || !password) {
-    alert("Заполни email и пароль");
-    return;
-  }
-
-  const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-  await setDoc(doc(db, "users", cred.user.uid), {
-    email,
-    points: 0,
-    role: "user"
-  });
-
-  alert("Аккаунт создан");
-};
-
-window.login = async () => {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-
-  await signInWithEmailAndPassword(auth, email, password);
-  location.href = "board.html";
-};
-
-/* ===== ROLE CHECK ===== */
-onAuthStateChanged(auth, async (user) => {
+/* AUTH STATE */
+onAuthStateChanged(auth, async user => {
   if (!user) return;
 
-  const ref = doc(db, "users", user.uid);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return;
+  currentUser = user;
+  const snap = await getDoc(doc(db, "users", user.uid));
+  userData = snap.data();
 
-  const role = snap.data().role;
+  status.textContent = `Вы вошли как ${userData.username} (${userData.role})`;
 
-  // показать кнопку получения прав
-  if (role !== "moderator" && !localStorage.getItem(ADMIN_FLAG)) {
-    const btn = document.getElementById("adminBtn");
-    if (btn) btn.style.display = "inline-block";
+  // если проверка уже использована — убрать кнопку
+  if (localStorage.getItem("GDBOARD_CHECK_USED")) {
+    document.getElementById("checkBtn")?.remove();
   }
 
-  // защита admin.html
-  if (location.pathname.includes("admin.html") && role !== "moderator") {
-    alert("Нет прав администратора");
-    location.href = "index.html";
+  // если elder moderator — показать панель управления
+  if (userData.role === "elder_moderator") {
+    loadUserList();
   }
 });
 
-/* ===== ONE-TIME ADMIN ===== */
-window.becomeAdmin = async () => {
-  const user = auth.currentUser;
-  if (!user) return;
+/* REGISTER */
+window.register = async () => {
+  const cred = await createUserWithEmailAndPassword(
+    auth,
+    email.value,
+    password.value
+  );
 
-  if (localStorage.getItem(ADMIN_FLAG)) {
-    alert("Права уже были получены");
-    return;
+  await setDoc(doc(db, "users", cred.user.uid), {
+    username: username.value,
+    role: "user",
+    points: 0
+  });
+};
+
+/* LOGIN */
+window.login = async () => {
+  await signInWithEmailAndPassword(auth, email.value, password.value);
+};
+
+/* CHECK BUTTON */
+window.checkAdmin = () => {
+  modal.classList.remove("hidden");
+
+  if (userData.role === "user") {
+    modalText.textContent = "Не найдено";
+    confirmBtn.classList.add("hidden");
+  } else {
+    modalText.textContent = "Найдено";
+    confirmBtn.classList.remove("hidden");
   }
+};
 
-  await updateDoc(doc(db, "users", user.uid), {
+/* CONFIRM */
+window.confirmAdmin = async () => {
+  await updateDoc(doc(db, "users", currentUser.uid), {
     role: "moderator"
   });
 
-  localStorage.setItem(ADMIN_FLAG, "true");
-
-  alert("Права администратора получены");
+  localStorage.setItem("GDBOARD_CHECK_USED", "1");
+  document.getElementById("checkBtn").remove();
+  closeModal();
   location.reload();
 };
 
-/* ===== LEADERBOARD ===== */
-window.loadBoard = async () => {
-  const list = document.getElementById("list");
+/* ELDER MODERATOR PANEL */
+async function loadUserList() {
+  const list = document.getElementById("userList");
   if (!list) return;
 
+  const snap = await getDocs(collection(db, "users"));
   list.innerHTML = "";
 
-  const q = query(collection(db, "users"), orderBy("points", "desc"));
-  const snap = await getDocs(q);
-
-  snap.forEach(d => {
-    const u = d.data();
-    list.innerHTML += `<li>${u.email} — ${u.points}</li>`;
+  snap.forEach(docu => {
+    const u = docu.data();
+    if (u.role === "user") {
+      const div = document.createElement("div");
+      div.className = "userRow";
+      div.innerHTML = `
+        <span>${u.username}</span>
+        <button onclick="makeModerator('${docu.id}')">Сделать модератором</button>
+      `;
+      list.appendChild(div);
+    }
   });
-};
+}
 
-/* ===== MODERATOR ACTION ===== */
-window.addPoints = async () => {
-  const uid = document.getElementById("uid").value.trim();
-  const pts = Number(document.getElementById("points").value);
-
-  if (!uid || isNaN(pts)) {
-    alert("Неверные данные");
-    return;
-  }
-
+window.makeModerator = async uid => {
   await updateDoc(doc(db, "users", uid), {
-    points: increment(pts)
+    role: "moderator"
   });
-
-  alert("Очки начислены");
+  loadUserList();
 };
+
+/* MODAL */
+window.closeModal = () => modal.classList.add("hidden");
