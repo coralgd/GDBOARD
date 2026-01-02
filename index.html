@@ -7,6 +7,7 @@
 </head>
 <body>
 
+<!-- ФОН -->
 <canvas id="gridCanvas"></canvas>
 
 <h1>GDBOARD</h1>
@@ -14,8 +15,15 @@
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Пароль">
 
-<button onclick="register()">Регистрация</button>
-<button onclick="login()">Вход</button>
+<div>
+  <button onclick="register()">Регистрация</button>
+  <button onclick="login()">Вход</button>
+</div>
+
+<!-- КНОПКА АДМИНА -->
+<button id="adminBtn" onclick="becomeAdmin()" style="display:none">
+  Получить права администратора
+</button>
 
 <script type="module" src="app.js"></script>
 <script src="canvas.js"></script>
