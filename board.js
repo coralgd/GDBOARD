@@ -17,14 +17,11 @@ const leaderboard = document.getElementById("leaderboard");
 
 async function loadLeaderboard() {
   const snap = await getDocs(collection(db, "users"));
-  let users = [];
-  snap.forEach(d => users.push(d.data()));
+  const users = [];
+  snap.forEach(d => users.push({ email: d.data().email || "Пользователь", points: d.data().points || 0 }));
+  users.sort((a,b)=> b.points - a.points);
 
-  users.sort((a,b)=> (b.points||0) - (a.points||0));
-
-  leaderboard.innerHTML = users.map(u => `<p>${u.email} — ${u.points || 0} очков</p>`).join("");
+  leaderboard.innerHTML = users.map(u=> `<p>${u.email} — ${u.points} очков</p>`).join("");
 }
 
 loadLeaderboard();
-
-window.goBack = () => window.location.href = "index.html";
