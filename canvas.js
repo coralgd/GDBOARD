@@ -8,29 +8,47 @@ function resize() {
 resize();
 addEventListener("resize", resize);
 
-let z = 0;
+const stars = [];
+const STAR_COUNT = 400;
+
+for (let i = 0; i < STAR_COUNT; i++) {
+  stars.push({
+    x: Math.random() * canvas.width - canvas.width / 2,
+    y: Math.random() * canvas.height - canvas.height / 2,
+    z: Math.random() * canvas.width
+  });
+}
 
 function draw() {
-  ctx.fillStyle = "#050510";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "rgba(5,5,16,0.4)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.strokeStyle = "#00cfff";
-  ctx.lineWidth = 1;
+  ctx.translate(canvas.width / 2, canvas.height / 2);
 
-  for(let i=0;i<50;i++){
-    let depth = (i*40 + z)%2000;
-    let scale = 300/(depth+1);
+  for (const s of stars) {
+    s.z -= 15;
 
-    let y = canvas.height - depth*0.6;
-    let w = canvas.width * scale;
+    if (s.z < 1) {
+      s.z = canvas.width;
+      s.x = Math.random() * canvas.width - canvas.width / 2;
+      s.y = Math.random() * canvas.height - canvas.height / 2;
+    }
+
+    const k = 128 / s.z;
+    const px = s.x * k;
+    const py = s.y * k;
+
+    ctx.strokeStyle = "#00cfff";
+    ctx.lineWidth = 2;
 
     ctx.beginPath();
-    ctx.moveTo(canvas.width/2 - w, y);
-    ctx.lineTo(canvas.width/2 + w, y);
+    ctx.moveTo(px, py);
+    ctx.lineTo(px * 1.1, py * 1.1);
     ctx.stroke();
   }
 
-  z += 8;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   requestAnimationFrame(draw);
 }
+
 draw();
