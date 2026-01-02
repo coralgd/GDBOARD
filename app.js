@@ -46,11 +46,6 @@ onAuthStateChanged(auth, async user => {
     elderPanel.classList.remove("hidden");
     loadUsers();
   }
-
-  // кнопка "Проверить" скрыта, если уже использована
-  if (localStorage.getItem("GDBOARD_CHECK_USED")) {
-    checkBtn.remove();
-  }
 });
 
 /* Регистрация */
@@ -72,33 +67,6 @@ window.login = async () => {
   if (!email.value || !password.value) return alert("Введите email и пароль");
   await signInWithEmailAndPassword(auth, email.value, password.value);
 };
-
-/* КНОПКА "ПРОВЕРИТЬ" */
-window.checkAdmin = () => {
-  if (!userData) return;
-
-  modal.classList.remove("hidden");
-
-  if (userData.role === "user") {
-    modalText.textContent = "Не найдено";
-    confirmBtn.classList.add("hidden");
-  } else {
-    modalText.textContent = "Найдено";
-    confirmBtn.classList.remove("hidden");
-  }
-};
-
-/* КНОПКА "ПОДТВЕРДИТЬ" */
-window.confirmAdmin = async () => {
-  await updateDoc(doc(db, "users", currentUser.uid), { role: "moderator" });
-  localStorage.setItem("GDBOARD_CHECK_USED", "1");
-  checkBtn.remove();
-  closeModal();
-  location.reload();
-};
-
-/* Закрыть модалку */
-window.closeModal = () => modal.classList.add("hidden");
 
 /* ELDER MODERATOR PANEL */
 async function loadUsers() {
