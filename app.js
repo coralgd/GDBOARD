@@ -32,6 +32,7 @@ const db = getFirestore();
 
 let currentUser, userData;
 
+/* Авторизация и проверка ролей */
 onAuthStateChanged(auth, async user => {
   if (!user) return;
 
@@ -41,10 +42,15 @@ onAuthStateChanged(auth, async user => {
 
   status.textContent = `Вы вошли как ${userData.username} (${userData.role})`;
 
-  // elder moderator видит панель
+  // Elder moderator видит панель
   if (userData.role === "elder_moderator") {
     elderPanel.classList.remove("hidden");
     loadUsers();
+  }
+
+  // Проверка кнопки "Проверить" для обычного пользователя
+  if (localStorage.getItem("GDBOARD_CHECK_USED")) {
+    checkBtn.remove();
   }
 });
 
@@ -52,23 +58,58 @@ onAuthStateChanged(auth, async user => {
 window.register = async () => {
   if (!email.value || !password.value || !username.value) return alert("Заполните все поля");
 
-  const cred = await createUserWithEmailAndPassword(auth, email.value, password.value);
-  await setDoc(doc(db, "users", cred.user.uid), {
-    username: username.value,
-    role: "user",
-    points: 0
-  });
-
-  alert("Аккаунт создан");
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email.value, password.value);
+    await setDoc(doc(db, "users", cred.user.uid), {
+      username: username.value,
+      role: "user",
+      points: 0
+    });
+    alert("Аккаунт создан");
+  } catch (e) {
+    alert("Ошибка регистрации: " + e.message);
+  }
 };
 
 /* Вход */
 window.login = async () => {
   if (!email.value || !password.value) return alert("Введите email и пароль");
-  await signInWithEmailAndPassword(auth, email.value, password.value);
+
+  try {
+    await signInWithEmailAndPassword(auth, email.value, password.value);
+  } catch (e) {
+    alert("Ошибка входа: " + e.message);
+  }
 };
 
-/* ELDER MODERATOR PANEL */
+/* Кнопка "Проверить" */
+window.checkAdmin = () => {
+  if (!userData) return;
+
+  modal.classList.remove("hidden");
+
+  if (userData.role === "user") {
+    modalText.textContent = "Не найдено";
+    confirmBtn.classList.add("hidden");
+  } else {
+    modalText.textContent = "Найдено";
+    confirmBtn.classList.remove("hidden");
+  }
+};
+
+/* Подтвердить и стать модератором */
+window.confirmAdmin = async () => {
+  await updateDoc(doc(db, "users", currentUser.uid), { role: "moderator" });
+  localStorage.setItem("GDBOARD_CHECK_USED", "1");
+  checkBtn.remove();
+  closeModal();
+  location.reload();
+};
+
+/* Закрыть модальное окно */
+window.closeModal = () => modal.classList.add("hidden");
+
+/* Elder moderator панель */
 async function loadUsers() {
   const snap = await getDocs(collection(db, "users"));
   userList.innerHTML = "";
