@@ -28,11 +28,3 @@ button, .link {
   padding: 5px 10px;
   cursor: pointer;
 }
-
-.hidden {
-  display: none;
-}
-
-.userRow {
-  margin: 5px 0;
-}
