@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>GDBOARD — Главная</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<header>
+    <button onclick="window.location.href='index.html'">← Выйти</button>
+    GDBOARD
+</header>
+<div class="container">
+    <h2>Очки: <span id="points">0</span></h2>
+    <h2>Место: <span id="place">0</span></h2>
+    <button onclick="window.location.href='board.html'">Лидерборд</button>
+    <button onclick="window.location.href='settings.html'">Настройки аккаунта</button>
+</div>
+<script type="module" src="bg.js"></script>
+<script type="module" src="main.js"></script>
+</body>
+</html>

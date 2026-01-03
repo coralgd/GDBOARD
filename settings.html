@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>GDBOARD — Настройки</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<header>
+    <button onclick="window.location.href='main.html'">← Назад</button>
+    Настройки аккаунта
+</header>
+<div class="container">
+    <input id="usernameInput" type="text" placeholder="Введите ник">
+    <button id="requestBtn">Запросить</button>
+    <p>Статус: <span id="statusText">unverified</span></p>
+</div>
+<script type="module" src="bg.js"></script>
+<script type="module" src="settings.js"></script>
+</body>
+</html>
