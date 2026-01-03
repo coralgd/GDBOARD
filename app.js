@@ -2,8 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
   getAuth,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  onAuthStateChanged
+  signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   getFirestore,
@@ -26,49 +25,50 @@ initializeApp(firebaseConfig);
 const auth = getAuth();
 const db = getFirestore();
 
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-const status = document.getElementById("status");
-const pointsEl = document.getElementById("points");
-
-let currentUser;
-
-onAuthStateChanged(auth, async user => {
-  if (!user) return;
-
-  currentUser = user;
-  const snap = await getDoc(doc(db, "users", user.uid));
-  if (!snap.exists()) return;
-
-  const userData = snap.data();
-  status.textContent = `Вы вошли как ${user.email}`;
-  pointsEl.textContent = `Очки: ${userData.points || 0}`;
-});
+const emailEl = document.getElementById("email");
+const passEl = document.getElementById("password");
+const statusEl = document.getElementById("status");
 
 /* Регистрация */
 window.register = async () => {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-  if (!email || !password) return alert("Введите email и пароль");
-
   try {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, "users", cred.user.uid), { points: 0 });
-    alert("Аккаунт создан");
-  } catch(e) {
-    alert("Ошибка регистрации: "+e.message);
+    const cred = await createUserWithEmailAndPassword(
+      auth,
+      emailEl.value,
+      passEl.value
+    );
+
+    await setDoc(doc(db, "users", cred.user.uid), {
+      status: "unverified",
+      username: "",
+      points: 0
+    });
+
+    window.location.href = "request.html";
+  } catch (e) {
+    alert(e.message);
   }
 };
 
 /* Вход */
 window.login = async () => {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-  if (!email || !password) return alert("Введите email и пароль");
-
   try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch(e) {
-    alert("Ошибка входа: "+e.message);
+    const cred = await signInWithEmailAndPassword(
+      auth,
+      emailEl.value,
+      passEl.value
+    );
+
+    const snap = await getDoc(doc(db, "users", cred.user.uid));
+    const data = snap.data();
+
+    if (data.status !== "verified") {
+      alert("Аккаунт не подтверждён");
+      return;
+    }
+
+    statusEl.textContent = "Вход выполнен";
+  } catch (e) {
+    alert(e.message);
   }
 };
