@@ -7,21 +7,18 @@
 </head>
 <body>
 
-<canvas id="bg"></canvas>
-
 <div class="panel">
   <h1>GDBOARD</h1>
 
   <input id="email" placeholder="Email">
   <input id="password" type="password" placeholder="Пароль">
 
+  <button onclick="login()">Войти</button>
   <button onclick="register()">Регистрация</button>
-  <button onclick="login()">Вход</button>
 
-  <p id="status"></p>
+  <p id="info"></p>
 </div>
 
-<script type="module" src="app.js"></script>
-<script src="bg.js"></script>
+<script type="module" src="auth.js"></script>
 </body>
 </html>
