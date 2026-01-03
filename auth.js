@@ -1,51 +1,32 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  setDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDin9IH2dxOjj-VqYDQnIZzC47R0y4N0tg",
-  authDomain: "gdboardcoral.firebaseapp.com",
-  projectId: "gdboardcoral",
-  storageBucket: "gdboardcoral.firebasestorage.app",
-  messagingSenderId: "771826157258",
-  appId: "1:771826157258:web:928039314035558a9b5633"
-};
-
-initializeApp(firebaseConfig);
+import "./firebase.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const auth = getAuth();
 const db = getFirestore();
-const info = document.getElementById("info");
 
-window.login = async () => {
+login.onclick = async () => {
   try {
-    await signInWithEmailAndPassword(auth, email.value, password.value);
+    const cred = await signInWithEmailAndPassword(auth, email.value, pass.value);
+    const ref = doc(db, "users", cred.user.uid);
+    const snap = await ref.get();
     location.href = "gate.html";
   } catch (e) {
-    info.textContent = e.message;
+    alert("Ошибка входа: " + e.message);
   }
 };
 
-window.register = async () => {
+reg.onclick = async () => {
   try {
-    const cred = await createUserWithEmailAndPassword(auth, email.value, password.value);
-
+    const cred = await createUserWithEmailAndPassword(auth, email.value, pass.value);
     await setDoc(doc(db, "users", cred.user.uid), {
+      email: email.value,
       username: "",
       status: "unverified",
       points: 0
     });
-
     location.href = "gate.html";
   } catch (e) {
-    info.textContent = e.message;
+    alert("Ошибка регистрации: " + e.message);
   }
 };
