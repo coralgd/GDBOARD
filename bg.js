@@ -1,12 +1,9 @@
 const c = document.getElementById("bg");
 const ctx = c.getContext("2d");
 
-function resize() {
-  c.width = innerWidth;
-  c.height = innerHeight;
-}
+function resize() { c.width = window.innerWidth; c.height = window.innerHeight; }
 resize();
-addEventListener("resize", resize);
+window.addEventListener("resize", resize);
 
 let angle = 0;
 
@@ -20,25 +17,23 @@ function draw() {
 
   ctx.strokeStyle = "cyan";
   ctx.lineWidth = 1;
-
   const size = 50;
   const max = Math.max(c.width, c.height);
 
-  for (let i = -max; i < max; i += size) {
+  for(let i=-max;i<max;i+=size){
     ctx.beginPath();
-    ctx.moveTo(i, -max);
-    ctx.lineTo(i, max);
+    ctx.moveTo(i,-max);
+    ctx.lineTo(i,max);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(-max, i);
-    ctx.lineTo(max, i);
+    ctx.moveTo(-max,i);
+    ctx.lineTo(max,i);
     ctx.stroke();
   }
 
   ctx.restore();
   angle += 0.002;
-
   requestAnimationFrame(draw);
 }
 
