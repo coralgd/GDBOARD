@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<input id="email" placeholder="email">
+<input id="password" type="password" placeholder="password">
+<button id="btn">Войти / Зарегистрироваться</button>
+
+<script type="module">
+import { login } from "./auth.js";
+document.getElementById("btn").onclick = () =>
+  login(email.value, password.value);
+</script>
+</body>
+</html>

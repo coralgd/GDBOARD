@@ -1,0 +1,21 @@
+<script type="module">
+import { storage, db, auth } from "./firebase.js";
+import { ref, uploadBytes, getDownloadURL }
+from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+import { addDoc, collection } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+async function send(){
+ const file = document.getElementById("f").files[0];
+ const r = ref(storage,`files/${file.name}`);
+ await uploadBytes(r,file);
+ const url = await getDownloadURL(r);
+ await addDoc(collection(db,"submissions"),{
+   uid:auth.currentUser.uid,
+   status:"pending",
+   fileURL:url
+ });
+}
+</script>
+
+<input type="file" id="f">
+<button onclick="send()">Отправить</button>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Панель модератора</title>
+</head>
+<body>
+
+<h1>Панель модератора</h1>
+
+<h2>Игроки</h2>
+<div id="players"></div>
+
+<h2>Отправленные файлы</h2>
+<div id="files"></div>
+
+<script type="module">
+import { guard } from "./guard.js";
+guard({ needVerified:true, needRole:"moderator" });
+
+import { db } from "./firebase.js";
+import {
+  collection, query, where, getDocs, updateDoc, doc
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+// === ИГРОКИ ===
+const playersDiv = document.getElementById("players");
+
+const q = query(
+  collection(db,"users"),
+  where("situation","==","verified"),
+  where("role","==","player")
+);
+
+const snap = await getDocs(q);
+snap.forEach(d => {
+  const u = d.data();
+  playersDiv.innerHTML += `
+    <div>
+      <b>${u.nick}</b> | Очки: ${u.points}
+      <input type="number" id="p_${d.id}" value="0">
+      <button onclick="change('${d.id}')">Изменить</button>
+    </div>
+  `;
+});
+
+window.change = async (uid) => {
+  const delta = Number(document.getElementById("p_"+uid).value);
+  await updateDoc(doc(db,"users",uid), {
+    points: u.points + delta // безопасно, rules не дадут сломать
+  });
+};
+
+// === ФАЙЛЫ ===
+const filesDiv = document.getElementById("files");
+
+const filesSnap = await getDocs(collection(db,"submissions"));
+filesSnap.forEach(d => {
+  const f = d.data();
+  if (f.status !== "pending") return;
+
+  filesDiv.innerHTML += `
+    <div>
+      ${f.nick}
+      <a href="${f.fileURL}" target="_blank">Файл</a>
+      <button onclick="approve('${d.id}')">Подтвердить</button>
+      <button onclick="reject('${d.id}')">Отказать</button>
+    </div>
+  `;
+});
+
+window.approve = id =>
+  updateDoc(doc(db,"submissions",id),{ status:"approved" });
+
+window.reject = id =>
+  updateDoc(doc(db,"submissions",id),{ status:"rejected" });
+
+</script>
+</body>
+</html>

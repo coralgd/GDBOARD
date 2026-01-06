@@ -1,0 +1,16 @@
+<script type="module">
+import { db } from "./firebase.js";
+import { collection, query, where, orderBy, getDocs }
+from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+const q = query(
+  collection(db,"users"),
+  where("situation","==","verified"),
+  orderBy("points","desc")
+);
+
+const snap = await getDocs(q);
+snap.forEach(d=>{
+  document.body.innerHTML+=`${d.data().nick} - ${d.data().points}<br>`;
+});
+</script>
