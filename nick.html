@@ -1,17 +1,49 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Nick</title>
+  <meta charset="UTF-8">
+  <title>Nick Page</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+
+    // Firebase конфиг (тот же, что и в главной странице)
+    const firebaseConfig = {
+      apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
+      authDomain: "gdboard-add4a.firebaseapp.com",
+      projectId: "gdboard-add4a",
+      storageBucket: "gdboard-add4a.firebasestorage.app",
+      messagingSenderId: "883125028740",
+      appId: "1:883125028740:web:c504de4139943b8606bfd1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const userEmailElem = document.getElementById("userEmail");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    // Проверка текущего пользователя
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // Пользователь вошёл
+        userEmailElem.textContent = user.email;
+      } else {
+        // Нет пользователя, редирект на главную страницу
+        window.location.href = "index.html";
+      }
+    });
+
+    // Выход из аккаунта
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "index.html"; // после выхода возвращаем на главную
+    });
+  </script>
 </head>
 <body>
-<h2>Добро пожаловать!</h2>
-<p id="user"></p>
-
-
-<button onclick="logout()">Выйти</button>
-
-
-<script type="module" src="nick.js"></script>
+  <h1>Добро пожаловать!</h1>
+  <p>Ваш email: <span id="userEmail"></span></p>
+  <button id="logoutBtn">Выйти</button>
 </body>
 </html>
