@@ -4,89 +4,94 @@
 <meta charset="UTF-8">
 <title>GD Board — Вход/Регистрация</title>
 <style>
+  /* ---------------- Фон ---------------- */
   body {
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #1e1e1e, #272727);
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
     margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    color: #fff;
+    background: #0a0a0a;
   }
 
-  h1 {
-    font-size: 3rem;
-    margin-bottom: 2rem;
-    text-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff;
+  canvas#bgCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
   }
 
+  /* ---------------- Контейнер ---------------- */
   .form-container {
-    background: #333;
-    padding: 2rem 3rem;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(20,20,20,0.8);
+    padding: 40px 50px;
     border-radius: 20px;
-    box-shadow: 0 0 20px #00ffff;
+    box-shadow: 0 0 40px #00f, 0 0 80px #0ff;
     display: flex;
     flex-direction: column;
     align-items: center;
     min-width: 300px;
+    text-align: center;
   }
 
   input {
     margin: 10px 0;
-    padding: 10px 15px;
+    padding: 12px 20px;
     width: 100%;
-    border-radius: 10px;
+    border-radius: 15px;
     border: none;
     font-size: 1rem;
-    background: #222;
-    color: #fff;
     outline: none;
-    box-shadow: inset 0 0 5px #00ffff;
+    background: #111;
+    color: #0ff;
+    box-shadow: inset 0 0 8px #0ff;
   }
 
   button {
     margin-top: 15px;
-    padding: 10px 20px;
+    padding: 12px 25px;
     font-size: 1rem;
     font-weight: bold;
     border: none;
-    border-radius: 15px;
+    border-radius: 20px;
     cursor: pointer;
     color: #fff;
-    background: linear-gradient(45deg, #ff00ff, #00ffff);
-    transition: all 0.3s ease;
-    box-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff;
+    background: linear-gradient(45deg, #00f, #0ff);
+    transition: all 0.2s ease;
+    box-shadow: 0 0 20px #00f, 0 0 40px #0ff;
   }
 
   button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffff;
+    transform: scale(1.1);
+    box-shadow: 0 0 40px #00f, 0 0 80px #0ff;
   }
 
   #toggleBtn {
     background: none;
-    color: #00ffff;
+    color: #0ff;
     margin-top: 10px;
     text-decoration: underline;
     box-shadow: none;
   }
 
   #toggleBtn:hover {
-    color: #ff00ff;
+    color: #00f;
   }
 
-  .hidden {
-    display: none;
-  }
+  .hidden { display: none; }
+
 </style>
 </head>
 <body>
 
-<h1>GD Board</h1>
+<canvas id="bgCanvas"></canvas>
 
 <div class="form-container">
+  <h1>GD Board</h1>
 
   <!-- Вход -->
   <div id="loginForm">
@@ -95,9 +100,8 @@
     <button id="loginBtn">Войти</button>
   </div>
 
-  <!-- Регистрация -->
+  <!-- Регистрация (без ника) -->
   <div id="registerForm" class="hidden">
-    <input type="text" id="regNick" placeholder="Ник">
     <input type="email" id="regEmail" placeholder="Email">
     <input type="password" id="regPassword" placeholder="Пароль">
     <button id="registerBtn">Зарегистрироваться</button>
@@ -105,14 +109,12 @@
 
   <!-- Переключение -->
   <button id="toggleBtn">Регистрация</button>
-
 </div>
 
 <script type="module">
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
   const toggleBtn = document.getElementById("toggleBtn");
-
   let showingLogin = true;
 
   toggleBtn.addEventListener("click", () => {
@@ -128,7 +130,40 @@
     showingLogin = !showingLogin;
   });
 
-  // Здесь можно добавить интеграцию с Firebase для регистрации и входа
+  // -------------------- Фон --------------------
+  const canvas = document.getElementById("bgCanvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  let angle = 0;
+
+  function drawGrid() {
+    const spacing = 50;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.rotate(angle);
+    ctx.strokeStyle = "#0ff";
+    ctx.lineWidth = 1;
+    for(let x = -canvas.width; x < canvas.width; x += spacing){
+      ctx.beginPath();
+      ctx.moveTo(x, -canvas.height);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+    for(let y = -canvas.height; y < canvas.height; y += spacing){
+      ctx.beginPath();
+      ctx.moveTo(-canvas.width, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+    angle += 0.0015; // скорость вращения
+    requestAnimationFrame(drawGrid);
+  }
+
+  drawGrid();
 </script>
 
 </body>
