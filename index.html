@@ -1,68 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>GD Board — Вход/Регистрация</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Arial', sans-serif; background: #0a0a0a; }
+
+  canvas#bgCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+
+  .form-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(20,20,20,0.85);
+    padding: 40px 50px;
+    border-radius: 20px;
+    box-shadow: 0 0 30px #00f, 0 0 60px #0ff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 320px;
+    text-align: center;
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {opacity: 0; transform: translate(-50%, -55%);}
+    to {opacity: 1; transform: translate(-50%, -50%);}
+  }
+
+  h1 {
+    font-size: 3rem;
+    margin-bottom: 2rem;
+    color: #0ff;
+    text-shadow: 0 0 10px #00f, 0 0 20px #0ff;
+  }
+
+  input {
+    margin: 10px 0;
+    padding: 12px 20px;
+    width: 100%;
+    border-radius: 15px;
+    border: none;
+    font-size: 1rem;
+    outline: none;
+    background: #111;
+    color: #0ff;
+    box-shadow: inset 0 0 8px #0ff;
+  }
+
+  button {
+    margin-top: 15px;
+    padding: 12px 25px;
+    font-size: 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    color: #fff;
+    background: linear-gradient(45deg, #00f, #0ff);
+    transition: all 0.2s ease;
+    box-shadow: 0 0 20px #00f, 0 0 40px #0ff;
+  }
+
+  button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 40px #00f, 0 0 80px #0ff;
+  }
+
+  #toggleBtn {
+    background: none;
+    color: #0ff;
+    margin-top: 10px;
+    text-decoration: underline;
+    box-shadow: none;
+  }
+
+  #toggleBtn:hover { color: #00f; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
 <canvas id="bgCanvas"></canvas>
-<script>
-const canvas = document.getElementById("bgCanvas");
-const ctx = canvas.getContext("2d");
 
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
+<div class="form-container">
+  <h1>GD Board</h1>
 
-let angle = 0;
-let gridSpacing = 50;
+  <!-- Вход -->
+  <div id="loginForm">
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Пароль">
+    <button id="loginBtn">Войти</button>
+  </div>
 
-function drawGrid() {
-  const w = canvas.width;
-  const h = canvas.height;
+  <!-- Регистрация -->
+  <div id="registerForm" class="hidden">
+    <input type="email" id="regEmail" placeholder="Email">
+    <input type="password" id="regPassword" placeholder="Пароль">
+    <button id="registerBtn">Зарегистрироваться</button>
+  </div>
 
-  ctx.clearRect(0, 0, w, h);
+  <button id="toggleBtn">Регистрация</button>
+</div>
 
-  ctx.save();
-  ctx.translate(w/2, h/2);
-  ctx.rotate(angle);
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-  ctx.strokeStyle = "#0ff";
-  ctx.lineWidth = 1;
+  const firebaseConfig = {
+    apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
+    authDomain: "gdboard-add4a.firebaseapp.com",
+    projectId: "gdboard-add4a",
+    storageBucket: "gdboard-add4a.firebasestorage.app",
+    messagingSenderId: "883125028740",
+    appId: "1:883125028740:web:c504de4139943b8606bfd1"
+  };
 
-  // вертикальные линии
-  for (let x = -w; x <= w; x += gridSpacing) {
-    ctx.beginPath();
-    ctx.moveTo(x, -h);
-    ctx.lineTo(x, h);
-    ctx.stroke();
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const toggleBtn = document.getElementById("toggleBtn");
+  let showingLogin = true;
+
+  toggleBtn.addEventListener("click", () => {
+    if (showingLogin) {
+      loginForm.classList.add("hidden");
+      registerForm.classList.remove("hidden");
+      toggleBtn.textContent = "Войти";
+    } else {
+      registerForm.classList.add("hidden");
+      loginForm.classList.remove("hidden");
+      toggleBtn.textContent = "Регистрация";
+    }
+    showingLogin = !showingLogin;
+  });
+
+  // ---------- Firebase обработчики ----------
+  document.getElementById("registerBtn").addEventListener("click", async () => {
+    const email = document.getElementById("regEmail").value;
+    const password = document.getElementById("regPassword").value;
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = userCredential.user.uid;
+      await setDoc(doc(db, "users", uid), { situation: "not requested", role: "player", points: 0 });
+      window.location.href = "nick.html"; // Ник вводится на отдельной странице
+    } catch(e) { alert("Ошибка регистрации: " + e.message); }
+  });
+
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      window.location.href = "nick.html";
+    } catch(e) { alert("Ошибка входа: " + e.message); }
+  });
+
+  // ---------- Динамическая сетка GD ----------
+  const canvas = document.getElementById("bgCanvas");
+  const ctx = canvas.getContext("2d");
+
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  let angle = 0;
+  const spacing = 50;
+
+  function drawGrid() {
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.save();
+    ctx.translate(w/2, h/2);
+    ctx.rotate(angle);
+
+    ctx.strokeStyle = "#0ff";
+    ctx.lineWidth = 1;
+    for(let x = -w; x <= w; x += spacing){
+      ctx.beginPath();
+      ctx.moveTo(x, -h);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for(let y = -h; y <= h; y += spacing){
+      ctx.beginPath();
+      ctx.moveTo(-w, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+
+    // дополнительная редкая сетка
+    ctx.strokeStyle = "#00aaff";
+    ctx.lineWidth = 1.5;
+    for(let x = -w; x <= w; x += spacing*2){
+      ctx.beginPath();
+      ctx.moveTo(x, -h);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for(let y = -h; y <= h; y += spacing*2){
+      ctx.beginPath();
+      ctx.moveTo(-w, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+    angle += 0.002;
+    requestAnimationFrame(drawGrid);
   }
 
-  // горизонтальные линии
-  for (let y = -h; y <= h; y += gridSpacing) {
-    ctx.beginPath();
-    ctx.moveTo(-w, y);
-    ctx.lineTo(w, y);
-    ctx.stroke();
-  }
-
-  // добавим динамический эффект бликов
-  ctx.strokeStyle = "rgba(0,255,255,0.2)";
-  ctx.lineWidth = 2;
-  for (let x = -w; x <= w; x += gridSpacing*2) {
-    ctx.beginPath();
-    ctx.moveTo(x, -h);
-    ctx.lineTo(x, h);
-    ctx.stroke();
-  }
-  for (let y = -h; y <= h; y += gridSpacing*2) {
-    ctx.beginPath();
-    ctx.moveTo(-w, y);
-    ctx.lineTo(w, y);
-    ctx.stroke();
-  }
-
-  ctx.restore();
-
-  angle += 0.0025; // скорость вращения
-  requestAnimationFrame(drawGrid);
-}
-
-drawGrid();
+  drawGrid();
 </script>
+
+</body>
+</html>
