@@ -6,8 +6,8 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-    // Firebase конфиг (тот же, что и в главной странице)
     const firebaseConfig = {
       apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
       authDomain: "gdboard-add4a.firebaseapp.com",
@@ -19,31 +19,92 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
     const userEmailElem = document.getElementById("userEmail");
     const logoutBtn = document.getElementById("logoutBtn");
+    const nickInput = document.getElementById("nickInput");
+    const submitNickBtn = document.getElementById("submitNickBtn");
+    const situationElem = document.getElementById("situation");
+
+    let currentUser = null;
 
     // Проверка текущего пользователя
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // Пользователь вошёл
-        userEmailElem.textContent = user.email;
-      } else {
-        // Нет пользователя, редирект на главную страницу
-        window.location.href = "index.html";
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "index.html"; // если не вошёл
+        return;
       }
+
+      currentUser = user;
+      userEmailElem.textContent = user.email;
+
+      // Проверяем, есть ли уже ник для этого пользователя
+      const nickDocRef = doc(db, "nick", user.uid);
+      const nickDocSnap = await getDoc(nickDocRef);
+
+      if (nickDocSnap.exists()) {
+        const data = nickDocSnap.data();
+        nickInput.value = data.nick || "";
+        situationElem.textContent = data.situation || "not requested";
+
+        if (data.situation === "requested") {
+          nickInput.disabled = true;
+          submitNickBtn.disabled = true;
+        }
+      } else {
+        situationElem.textContent = "not requested";
+      }
+    });
+
+    // Отправка ника
+    submitNickBtn.addEventListener("click", async () => {
+      const nickValue = nickInput.value.trim();
+      if (!nickValue) {
+        alert("Введите ник!");
+        return;
+      }
+
+      const nickDocRef = doc(db, "nick", currentUser.uid);
+      const nickDocSnap = await getDoc(nickDocRef);
+
+      if (nickDocSnap.exists() && nickDocSnap.data().situation === "requested") {
+        alert("Вы уже отправили ник!");
+        return;
+      }
+
+      // Сохраняем ник в Firestore
+      await setDoc(nickDocRef, {
+        nick: nickValue,
+        situation: "requested",
+        uid: currentUser.uid,
+        email: currentUser.email,
+        createdAt: new Date()
+      });
+
+      situationElem.textContent = "requested";
+      nickInput.disabled = true;
+      submitNickBtn.disabled = true;
+      alert("Ник успешно отправлен!");
     });
 
     // Выход из аккаунта
     logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
-      window.location.href = "index.html"; // после выхода возвращаем на главную
+      window.location.href = "index.html";
     });
   </script>
 </head>
 <body>
   <h1>Добро пожаловать!</h1>
   <p>Ваш email: <span id="userEmail"></span></p>
+
+  <h2>Отправка ника</h2>
+  <input type="text" id="nickInput" placeholder="Введите ник"><br>
+  <button id="submitNickBtn">Отправить</button><br>
+  <p>Статус: <span id="situation">not requested</span></p>
+
+  <br>
   <button id="logoutBtn">Выйти</button>
 </body>
 </html>
