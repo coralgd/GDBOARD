@@ -5,10 +5,9 @@
   <title>Лидерборд</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-    // Firebase конфиг
     const firebaseConfig = {
       apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
       authDomain: "gdboard-add4a.firebaseapp.com",
@@ -22,61 +21,39 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const leaderboardList = document.getElementById("leaderboard");
-    const logoutBtn = document.getElementById("logoutBtn");
+    const leaderboardList = document.getElementById("leaderboardList");
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "index.html";
-        return;
+      if (!user) return window.location.href = "index.html";
+
+      const userDocSnap = await getDoc(doc(db, "users", user.uid));
+      if (!userDocSnap.exists()) return window.location.href = "index.html";
+
+      const data = userDocSnap.data();
+      const role = data.role || "player";
+      const situation = data.situation || "not requested";
+
+      // ⚡ Проверка: player должен быть verified
+      if (role === "player" && situation !== "verified") {
+        return window.location.href = "nick.html";
       }
 
+      // Загружаем всех verified пользователей для лидерборда
       const usersRef = collection(db, "users");
+      const q = query(usersRef, where("situation", "==", "verified"));
+      const snapshot = await getDocs(q);
 
-      try {
-        // Получаем все verified пользователи
-        const q = query(usersRef, where("situation", "==", "verified"));
-        const snapshot = await getDocs(q);
-
-        // Преобразуем в массив объектов
-        let users = snapshot.docs.map(doc => ({
-          id: doc.id,
-          nick: doc.data().nick || "Не указан",
-          points: typeof doc.data().points === "number" ? doc.data().points : 0
-        }));
-
-        // ⚡ Сортируем вручную по убыванию очков
-        users.sort((a, b) => b.points - a.points);
-
-        // Отображаем
-        leaderboardList.innerHTML = "";
-        users.forEach((data) => {
-          const li = document.createElement("li");
-          if (data.id === user.uid) {
-            li.style.fontWeight = "bold";
-            li.style.color = "green";
-            li.textContent = `${data.nick} — ${data.points} очков (Вы)`;
-          } else {
-            li.textContent = `${data.nick} — ${data.points} очков`;
-          }
-          leaderboardList.appendChild(li);
-        });
-
-      } catch (err) {
-        console.error("Ошибка загрузки лидерборда:", err);
-        leaderboardList.innerHTML = "<li>Не удалось загрузить лидерборд</li>";
-      }
-    });
-
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-      window.location.href = "index.html";
+      snapshot.forEach((docItem) => {
+        const userData = docItem.data();
+        const li = document.createElement("li");
+        li.textContent = `${userData.nick || "Не указан"} — ${userData.points || 0} очков`;
+        leaderboardList.appendChild(li);
+      });
     });
   </script>
 </head>
 <body>
   <h1>Лидерборд</h1>
-  <ul id="leaderboard"></ul>
-  <button id="logoutBtn">Выйти</button>
+  <ul id="leaderboardList"></ul>
 </body>
 </html>
