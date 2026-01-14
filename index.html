@@ -1,21 +1,76 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Login</title>
+  <meta charset="UTF-8">
+  <title>Регистрация и вход</title>
+  <script type="module">
+    // Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+    // Firebase конфиг
+    const firebaseConfig = {
+      apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
+      authDomain: "gdboard-add4a.firebaseapp.com",
+      projectId: "gdboard-add4a",
+      storageBucket: "gdboard-add4a.firebasestorage.app",
+      messagingSenderId: "883125028740",
+      appId: "1:883125028740:web:c504de4139943b8606bfd1"
+    };
+
+    // Инициализация Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Регистрация
+    window.registerUser = async () => {
+      const email = document.getElementById("regEmail").value;
+      const password = document.getElementById("regPassword").value;
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Создаем документ в Firestore
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          email: user.email,
+          createdAt: new Date()
+        });
+
+        alert("Регистрация успешна!");
+        window.location.href = "nick.html"; // редирект после регистрации
+      } catch (error) {
+        alert("Ошибка регистрации: " + error.message);
+      }
+    };
+
+    // Вход
+    window.loginUser = async () => {
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        alert("Вход успешен!");
+        window.location.href = "nick.html"; // редирект после входа
+      } catch (error) {
+        alert("Ошибка входа: " + error.message);
+      }
+    };
+  </script>
 </head>
 <body>
-<h2>Вход / Регистрация</h2>
+  <h1>Регистрация</h1>
+  <input type="email" id="regEmail" placeholder="Email"><br>
+  <input type="password" id="regPassword" placeholder="Пароль"><br>
+  <button onclick="registerUser()">Зарегистрироваться</button>
 
-
-<input id="email" type="email" placeholder="Email"><br><br>
-<input id="password" type="password" placeholder="Пароль"><br><br>
-<button onclick="loginOrRegister()">Войти</button>
-
-
-<p id="error" style="color:red"></p>
-
-
-<script type="module" src="auth.js"></script>
+  <h1>Вход</h1>
+  <input type="email" id="loginEmail" placeholder="Email"><br>
+  <input type="password" id="loginPassword" placeholder="Пароль"><br>
+  <button onclick="loginUser()">Войти</button>
 </body>
 </html>
