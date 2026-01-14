@@ -13,7 +13,8 @@
       where, 
       getDocs, 
       getDoc, 
-      doc 
+      doc,
+      orderBy
     } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -34,7 +35,7 @@
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.href = "index.html";
 
-      // Получаем документ текущего пользователя
+      // Проверка верификации текущего пользователя
       const userDocSnap = await getDoc(doc(db, "users", user.uid));
       if (!userDocSnap.exists()) return window.location.href = "index.html";
 
@@ -42,17 +43,21 @@
       const role = data.role || "player";
       const situation = data.situation || "not requested";
 
-      // ⚡ Проверка: player должен быть verified
       if (role === "player" && situation !== "verified") {
         return window.location.href = "nick.html";
       }
 
-      // Загружаем всех verified пользователей для лидерборда
+      // ⚡ Запрос всех verified пользователей с сортировкой по очкам по убыванию
       const usersRef = collection(db, "users");
-      const q = query(usersRef, where("situation", "==", "verified"));
+      const q = query(
+        usersRef,
+        where("situation", "==", "verified"),
+        orderBy("points", "desc")
+      );
+
       const snapshot = await getDocs(q);
 
-      // Очищаем список перед добавлением (на случай повторной загрузки)
+      // Очищаем список перед добавлением
       leaderboardList.innerHTML = "";
 
       snapshot.forEach((docItem) => {
