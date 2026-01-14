@@ -6,7 +6,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
@@ -29,22 +29,21 @@
 
     let currentUser = null;
 
-    // Проверка текущего пользователя
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        window.location.href = "index.html"; // если не вошёл
+        window.location.href = "index.html";
         return;
       }
 
       currentUser = user;
       userEmailElem.textContent = user.email;
 
-      // Проверяем, есть ли уже ник для этого пользователя
-      const nickDocRef = doc(db, "nick", user.uid);
-      const nickDocSnap = await getDoc(nickDocRef);
+      // Проверяем существующий документ пользователя
+      const userDocRef = doc(db, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
 
-      if (nickDocSnap.exists()) {
-        const data = nickDocSnap.data();
+      if (userDocSnap.exists()) {
+        const data = userDocSnap.data();
         nickInput.value = data.nick || "";
         situationElem.textContent = data.situation || "not requested";
 
@@ -53,11 +52,16 @@
           submitNickBtn.disabled = true;
         }
       } else {
+        // На всякий случай, если документ отсутствует
+        await setDoc(userDocRef, {
+          uid: user.uid,
+          email: user.email,
+          situation: "not requested"
+        });
         situationElem.textContent = "not requested";
       }
     });
 
-    // Отправка ника
     submitNickBtn.addEventListener("click", async () => {
       const nickValue = nickInput.value.trim();
       if (!nickValue) {
@@ -65,21 +69,18 @@
         return;
       }
 
-      const nickDocRef = doc(db, "nick", currentUser.uid);
-      const nickDocSnap = await getDoc(nickDocRef);
+      const userDocRef = doc(db, "users", currentUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
 
-      if (nickDocSnap.exists() && nickDocSnap.data().situation === "requested") {
+      if (userDocSnap.exists() && userDocSnap.data().situation === "requested") {
         alert("Вы уже отправили ник!");
         return;
       }
 
-      // Сохраняем ник в Firestore
-      await setDoc(nickDocRef, {
+      // Обновляем документ пользователя в users
+      await updateDoc(userDocRef, {
         nick: nickValue,
-        situation: "requested",
-        uid: currentUser.uid,
-        email: currentUser.email,
-        createdAt: new Date()
+        situation: "requested"
       });
 
       situationElem.textContent = "requested";
@@ -88,7 +89,6 @@
       alert("Ник успешно отправлен!");
     });
 
-    // Выход из аккаунта
     logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
       window.location.href = "index.html";
