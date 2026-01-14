@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Main Page</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
+      authDomain: "gdboard-add4a.firebaseapp.com",
+      projectId: "gdboard-add4a",
+      storageBucket: "gdboard-add4a.firebasestorage.app",
+      messagingSenderId: "883125028740",
+      appId: "1:883125028740:web:c504de4139943b8606bfd1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const nickElem = document.getElementById("nick");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      const userDocRef = doc(db, "users", user.uid);
+
+      // Слушаем изменения документа
+      onSnapshot(userDocRef, (docSnap) => {
+        if (!docSnap.exists()) {
+          window.location.href = "nick.html"; // нет документа, редирект на nick
+          return;
+        }
+
+        const data = docSnap.data();
+
+        if (data.situation !== "verified") {
+          // Если situation не verified — редирект обратно на nick
+          window.location.href = "nick.html";
+          return;
+        }
+
+        // Показываем ник
+        nickElem.textContent = data.nick || "Не указан";
+      });
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "index.html";
+    });
+  </script>
+</head>
+<body>
+  <h1>Главная страница</h1>
+  <p>Ваш ник: <span id="nick"></span></p>
+  <button id="logoutBtn">Выйти</button>
+</body>
+</html>
