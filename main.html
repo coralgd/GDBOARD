@@ -30,9 +30,9 @@
       if (!user) return window.location.href = "index.html";
 
       // Показываем ник пользователя
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        nickDisplay.textContent = userDoc.data().nick || "Не указан";
+      const userDocSnap = await getDoc(doc(db, "users", user.uid));
+      if (userDocSnap.exists()) {
+        nickDisplay.textContent = userDocSnap.data().nick || "Не указан";
       } else {
         nickDisplay.textContent = "Не найден";
       }
@@ -46,7 +46,6 @@
         if (role === "moderator") {
           window.location.href = "moderator.html";
         } else if (role === "elder") {
-          // Здесь будет elder панель
           roleMessage.textContent = "Панель старшего модератора пока не готова";
           roleMessage.style.color = "blue";
         } else {
