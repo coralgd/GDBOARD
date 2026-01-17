@@ -1,50 +1,44 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Login</title>
-<link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="app">
-  <div class="panel">
-    <h1>Вход</h1>
-    <input id="email" placeholder="Email"><br><br>
-    <input id="pass" type="password" placeholder="Пароль"><br><br>
-    <button class="btn" onclick="login()">Войти</button>
-    <button class="btn" onclick="reg()">Регистрация</button>
+<canvas id="hud-bg"></canvas>
+
+<div class="panel">
+  <h2>Вход / Регистрация</h2>
+  <div class="row">
+    <input type="email" id="email" placeholder="Почта">
+    <input type="password" id="password" placeholder="Пароль">
+    <div class="actions">
+      <button id="loginBtn">Войти</button>
+      <button id="registerBtn">Регистрация</button>
+    </div>
   </div>
+  <p id="status" style="color:red"></p>
 </div>
 
-<script src="hudBackground.js"></script>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { auth } from "./firebase.js";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const app = initializeApp({
-  apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
-  authDomain: "gdboard-add4a.firebaseapp.com",
-  projectId: "gdboard-add4a"
-});
+const emailInput = document.getElementById("email");
+const passInput = document.getElementById("password");
+const status = document.getElementById("status");
 
-const auth = getAuth(app);
-const db = getFirestore(app);
+document.getElementById("loginBtn").onclick = async () => {
+  try {
+    await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
+  } catch(e){ status.innerText = e.message; }
+};
 
-window.login = () =>
-  signInWithEmailAndPassword(auth, email.value, pass.value)
-    .then(()=>location.href="main.html");
-
-window.reg = async () => {
-  const r = await createUserWithEmailAndPassword(auth, email.value, pass.value);
-  await setDoc(doc(db,"users",r.user.uid),{
-    email: email.value,
-    role: "player",
-    situation: "not requested",
-    points: 0
-  });
-  location.href="nick.html";
+document.getElementById("registerBtn").onclick = async () => {
+  try {
+    await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
+  } catch(e){ status.innerText = e.message; }
 };
 </script>
+<script src="hudBackground.js"></script>
 </body>
 </html>
