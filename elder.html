@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Панель старшего модератора</title>
+<link rel="stylesheet" href="style.css">
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
@@ -34,13 +35,11 @@ onAuthStateChanged(auth, async (user) => {
   const currentData = currentUserSnap.data();
   const role = currentData.role || "player";
 
-  // Проверка роли — только elder
   if (role !== "elder") {
     alert("Нет доступа к панели старшего модератора!");
     return window.location.href = "main.html";
   }
 
-  // Получаем всех пользователей
   const usersRef = collection(db, "users");
   const snapshot = await getDocs(usersRef);
 
@@ -59,40 +58,3 @@ onAuthStateChanged(auth, async (user) => {
       ${nick} — <input type="number" value="${points}" style="width:50px;">
       <button class="changePoints">Изменить баллы</button>
       <button class="toggleModer">${userRole==="moderator"?"Снять модерку":"Назначить модером"}</button>
-      <button class="toggleVerified">${situation==="verified"?"Снять верификацию":"Верифицировать"}</button>
-    `;
-
-    const input = li.querySelector("input");
-
-    // Изменение баллов
-    li.querySelector(".changePoints").addEventListener("click", async () => {
-      await updateDoc(doc(db, "users", docItem.id), { points: Number(input.value) });
-      alert("Баллы обновлены!");
-    });
-
-    // Назначить/Снять модера
-    li.querySelector(".toggleModer").addEventListener("click", async () => {
-      const newRole = userRole === "moderator" ? "player" : "moderator";
-      await updateDoc(doc(db, "users", docItem.id), { role: newRole });
-      alert("Роль обновлена!");
-      location.reload();
-    });
-
-    // Верификация/Снятие верификации
-    li.querySelector(".toggleVerified").addEventListener("click", async () => {
-      const newSituation = situation === "verified" ? "not requested" : "verified";
-      await updateDoc(doc(db, "users", docItem.id), { situation: newSituation });
-      alert("Ситуация обновлена!");
-      location.reload();
-    });
-
-    usersList.appendChild(li);
-  });
-});
-</script>
-</head>
-<body>
-<h1>Панель старшего модератора</h1>
-<ul id="usersList"></ul>
-</body>
-</html>
