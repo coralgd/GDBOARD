@@ -1,54 +1,47 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Moderator</title>
-<link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<canvas id="hud-bg"></canvas>
 
-<div class="app">
-  <div class="panel">
-    <h1>Панель модератора</h1>
-    <div class="list" id="list"></div>
-  </div>
-</div>
+<div class="panel" id="list"></div>
 
-<script src="hudBackground.js"></script>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const app = initializeApp({
-  apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
-  authDomain: "gdboard-add4a.firebaseapp.com",
-  projectId: "gdboard-add4a"
-});
+onAuthStateChanged(auth, async user => {
+  if (!user) location.href="login.html";
 
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-onAuthStateChanged(auth, async user=>{
-  if(!user) location.href="index.html";
-
-  const me = (await getDocs(collection(db,"users"))).docs.find(d=>d.id===user.uid).data();
-  if(me.role!=="moderator" && me.role!=="elder") location.href="main.html";
+  const me = await getDoc(doc(db,"users",user.uid));
+  if (me.data().role !== "moderator" && me.data().role !== "elder")
+    location.href="main.html";
 
   const q = query(collection(db,"users"), where("situation","==","verified"));
   const snap = await getDocs(q);
 
   snap.forEach(d=>{
     const u=d.data();
-    if(u.role!=="player") return;
+    if(u.role==="moderator"||u.role==="elder")return;
 
-    const r=document.createElement("div");
-    r.className="row";
-    r.innerHTML=`<div></div><div>${u.nick}</div><input id="p${d.id}" value="${u.points}"><button class="btn">OK</button>`;
-    r.querySelector("button").onclick=()=>updateDoc(doc(db,"users",d.id),{points:+r.querySelector("input").value});
-    list.appendChild(r);
+    const row=document.createElement("div");
+    row.className="row";
+    row.innerHTML=`
+      <div>#</div>
+      <div>${u.nick}</div>
+      <input type="number" value="${u.points}">
+      <div class="actions">
+        <button>Изменить</button>
+      </div>
+    `;
+    row.querySelector("button").onclick=()=>updateDoc(d.ref,{points:+row.querySelector("input").value});
+    list.append(row);
   });
 });
 </script>
+<script src="hudBackground.js"></script>
 </body>
 </html>
