@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <title>Лидерборд</title>
 <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Лидерборд</h1>
+<ol id="leaderboardList" style="list-style: none; padding-left: 0;"></ol>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
@@ -27,53 +32,62 @@ const leaderboardList = document.getElementById("leaderboardList");
 onAuthStateChanged(auth, async (user) => {
   if (!user) return window.location.href = "index.html";
 
-  const userDocSnap = await getDoc(doc(db, "users", user.uid));
-  if (!userDocSnap.exists()) return window.location.href = "index.html";
+  const userSnap = await getDoc(doc(db, "users", user.uid));
+  if (!userSnap.exists()) return window.location.href = "index.html";
 
-  const data = userDocSnap.data();
-  const role = data.role || "player";
-  const situation = data.situation || "not requested";
-
-  if (role === "player" && situation !== "verified") return window.location.href = "nick.html";
+  const currentData = userSnap.data();
+  if (currentData.role === "player" && currentData.situation !== "verified") return window.location.href = "nick.html";
 
   const usersRef = collection(db, "users");
-  const q = query(usersRef, where("situation", "==", "verified"), orderBy("points", "desc"));
+  const q = query(usersRef, orderBy("points", "desc"));
   const snapshot = await getDocs(q);
 
+  // Сортировка и фильтр по verified для обычных игроков
+  const usersArray = snapshot.docs.map(docItem => ({ id: docItem.id, ...docItem.data() }));
+  
   leaderboardList.innerHTML = "";
 
-  const usersArray = snapshot.docs.map(docItem => ({ id: docItem.id, ...docItem.data() }));
-
+  // Вычисление рангов с одинаковыми баллами
+  let rank = 0;
   let prevPoints = null;
-  let prevRank = 0;
+  let skip = 1;
 
   usersArray.forEach((userData, index) => {
-    const li = document.createElement("li");
     const points = userData.points || 0;
-
-    let rank;
-    if (points === prevPoints) {
-      rank = prevRank;
+    if (prevPoints === null || points < prevPoints) {
+      rank += skip;
+      skip = 1;
     } else {
-      rank = index + 1;
-      prevPoints = points;
-      prevRank = rank;
+      skip++;
     }
+    prevPoints = points;
 
+    if (userData.situation !== "verified" && userData.role === "player") return; // обычные игроки не verified не показываем
+
+    const li = document.createElement("li");
     let line = `${userData.nick || "Не указан"} — ${points}`;
-    if (userData.role === "moderator") line += " Модер";
-    if (userData.role === "elder") line += " Старший модер";
 
-    if (userData.id === user.uid) li.classList.add("current");
+    if (userData.role === "moderator") line += " (Модер)";
+    if (userData.role === "elder") line += " (Старший модер)";
 
     li.textContent = `${rank}. ${line}`;
+
+    // Цвета по ролям
+    if (userData.id === user.uid) {
+      li.style.color = "#9b59b6"; // текущий игрок — фиолетовый
+      li.style.fontWeight = "bold";
+    } else if (userData.role === "elder") {
+      li.style.color = "#e74c3c"; // красный — старший модер
+      li.style.fontWeight = "bold";
+    } else if (userData.role === "moderator") {
+      li.style.color = "#f1c40f"; // желтый — модер
+    } else {
+      li.style.color = "#00ffcc"; // обычный игрок — голубой
+    }
+
     leaderboardList.appendChild(li);
   });
 });
 </script>
-</head>
-<body>
-<h1>Лидерборд</h1>
-<ol id="leaderboardList" style="list-style: none; padding-left: 0;"></ol>
 </body>
 </html>
