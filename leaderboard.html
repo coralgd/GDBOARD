@@ -1,69 +1,74 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>GDBoard - Лидерборд</title>
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>Лидерборд</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<canvas id="hud-bg"></canvas>
 
 <div class="panel">
   <h2>Лидерборд</h2>
-  <div id="leaderboard"></div>
+  <div id="board" class="table"></div>
 </div>
 
 <script type="module">
-import { db, auth } from "./firebase.js";
-import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const leaderboardContainer = document.getElementById("leaderboard");
+onAuthStateChanged(auth, async user => {
+  if(!user) location.href="index.html";
 
-async function loadLeaderboard() {
-  const q = query(collection(db,"users"), orderBy("points","desc"));
+  const boardContainer = document.getElementById("board");
+  boardContainer.innerHTML = "";
+
+  // Только verified пользователи, сортировка по points desc
+  const q = query(
+    collection(db,"users"),
+    where("situation","==","verified"),
+    orderBy("points","desc")
+  );
+
   const snapshot = await getDocs(q);
-  let users = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
 
-  let rank = 1;
-  let prevPoints = null;
-  let skipRank = 0;
+  let lastPoints = null;
+  let place = 0;
+  let skip = 1;
 
-  users.forEach((user, index) => {
-    let place = "";
+  snapshot.docs.forEach(docSnap => {
+    const data = docSnap.data();
+    let displayPlace;
 
-    if(user.points > 0){
-      if(prevPoints !== null){
-        if(user.points === prevPoints){
-          skipRank++;
-        } else {
-          rank += 1 + skipRank;
-          skipRank = 0;
-        }
-      }
-      place = rank;
-      prevPoints = user.points;
+    if(lastPoints === data.points){
+      displayPlace = place;
+      skip++;
+    } else {
+      place += skip;
+      displayPlace = place;
+      skip = 1;
+      lastPoints = data.points;
     }
 
-    const userDiv = document.createElement("div");
-    userDiv.className = "leader-row";
+    // Ник текущего пользователя
+    let nickDisplay = data.nick;
+    if(docSnap.id === user.uid) nickDisplay = `${data.nick} (Вы)`;
 
-    let roleText = "";
-    if(user.role === "moderator") roleText = "Модер";
-    if(user.role === "elder") roleText = "Старший модер";
+    // Роль
+    let roleDisplay = "";
+    if(data.role==="moderator") roleDisplay="Модер";
+    if(data.role==="elder") roleDisplay="Старший модер";
 
-    userDiv.innerHTML = `
-      ${user.points} — ${user.nick} ${roleText ? roleText : ""} ${place ? place : ""}
-    `;
+    // В одну строку через пробел
+    const row = document.createElement("div");
+    row.classList.add("row");
+    row.innerText = `${displayPlace} ${nickDisplay} ${data.points} ${roleDisplay}`;
 
-    if(auth.currentUser && auth.currentUser.uid === user.id){
-      userDiv.classList.add("current-player");
-    }
-
-    leaderboardContainer.appendChild(userDiv);
+    boardContainer.appendChild(row);
   });
-}
-
-loadLeaderboard();
+});
 </script>
-
+<script src="hudBackground.js"></script>
 </body>
 </html>
