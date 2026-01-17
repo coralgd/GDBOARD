@@ -4,6 +4,58 @@
   <meta charset="UTF-8">
   <title>GDBoard - Вход/Регистрация</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Минимальные стили для правильного расположения кнопок на одной строке */
+    .panel {
+      width: 350px;
+      margin: 100px auto;
+      padding: 30px;
+      background: linear-gradient(145deg, #1c1c1c, #2a2a2a);
+      border: 2px solid #0af;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,170,255,0.5);
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+    }
+
+    .panel input {
+      width: 80%;
+      margin: 8px 0;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #0af;
+      background-color: #1c1c1c;
+      color: #fff;
+    }
+
+    .panel .buttons-row {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 15px;
+    }
+
+    .panel button {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      background: #0af;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .panel button:hover {
+      background: #09e;
+      box-shadow: 0 0 8px #09e;
+    }
+
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
 <canvas id="hud-bg"></canvas>
@@ -11,13 +63,16 @@
 <div class="panel">
   <h2>Вход / Регистрация</h2>
 
-  <!-- Поля ввода + кнопки в одной карточке -->
   <input type="email" id="email" placeholder="Почта">
   <input type="password" id="password" placeholder="Пароль">
-  <button id="loginBtn">Войти</button>
-  <button id="registerBtn">Регистрация</button>
 
-  <p id="status" style="color:red"></p>
+  <!-- Кнопки на одной строке -->
+  <div class="buttons-row">
+    <button id="loginBtn">Войти</button>
+    <button id="registerBtn">Регистрация</button>
+  </div>
+
+  <p id="status"></p>
 </div>
 
 <script type="module">
