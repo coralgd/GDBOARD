@@ -35,7 +35,6 @@ document.getElementById("loginBtn").onclick = async () => {
     const cred = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
     console.log("Успешный вход");
 
-    // Проверяем ситуацию пользователя
     const ref = doc(db,"users",cred.user.uid);
     const snap = await getDoc(ref);
     const data = snap.data();
@@ -45,7 +44,6 @@ document.getElementById("loginBtn").onclick = async () => {
     } else {
       location.href="main.html";
     }
-
   } catch(e){
     console.error(e);
     status.innerText = e.message;
@@ -57,7 +55,6 @@ document.getElementById("registerBtn").onclick = async () => {
     const cred = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
     console.log("Регистрация успешна");
 
-    // Создаём документ с дефолтными значениями
     await setDoc(doc(db,"users",cred.user.uid),{
       nick:"",
       points:0,
