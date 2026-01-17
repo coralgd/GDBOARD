@@ -14,18 +14,17 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 onAuthStateChanged(auth, async user => {
-  if (!user) location.href="login.html";
+  if (!user) location.href="index.html";
   const me = await getDoc(doc(db,"users",user.uid));
-  if (me.data().role !== "moderator" && me.data().role !== "elder") location.href="main.html";
+  if(!["moderator","elder"].includes(me.data().role)) location.href="main.html";
 
   const q = query(collection(db,"users"), where("situation","==","verified"));
   const snap = await getDocs(q);
-
   snap.forEach(d=>{
-    const u=d.data();
-    if(u.role==="moderator"||u.role==="elder")return;
+    const u = d.data();
+    if(u.role==="moderator"||u.role==="elder") return;
 
-    const row=document.createElement("div");
+    const row = document.createElement("div");
     row.className="row";
     row.innerHTML=`
       <div>#</div>
@@ -35,7 +34,7 @@ onAuthStateChanged(auth, async user => {
         <button>Изменить</button>
       </div>
     `;
-    row.querySelector("button").onclick=()=>updateDoc(d.ref,{points:+row.querySelector("input").value});
+    row.querySelector("button").onclick = ()=>updateDoc(d.ref,{points:+row.querySelector("input").value});
     list.append(row);
   });
 });
