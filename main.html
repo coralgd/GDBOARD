@@ -26,6 +26,7 @@ const nickEl = document.getElementById("nick");
 const pointsEl = document.getElementById("points");
 const rankEl = document.getElementById("rank");
 const leaderboardBtn = document.getElementById("leaderboardBtn");
+const checkBtnContainer = document.getElementById("checkBtnContainer");
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) return window.location.href = "index.html";
@@ -35,10 +36,26 @@ onAuthStateChanged(auth, async (user) => {
   if (!userSnap.exists()) return window.location.href = "index.html";
 
   const data = userSnap.data();
+
+  // Проверка верификации
   if (data.situation !== "verified") return window.location.href = "nick.html";
 
   nickEl.textContent = data.nick;
   pointsEl.textContent = data.points;
+
+  // Кнопка "Проверить" для модеров и старших модеров
+  if (data.role === "moderator" || data.role === "elder") {
+    const btn = document.createElement("button");
+    btn.textContent = "Проверить";
+    btn.addEventListener("click", () => {
+      if (data.role === "moderator") {
+        window.location.href = "moderator.html";
+      } else if (data.role === "elder") {
+        window.location.href = "elder.html";
+      }
+    });
+    checkBtnContainer.appendChild(btn);
+  }
 
   // Рассчёт ранга
   const usersRef = collection(db, "users");
@@ -48,17 +65,21 @@ onAuthStateChanged(auth, async (user) => {
   const usersArray = snapshot.docs.map(docItem => docItem.data());
   let prevPoints = null;
   let prevRank = 0;
+  let skip = 1;
 
   for (let i = 0; i < usersArray.length; i++) {
     const userData = usersArray[i];
     let rank;
-    if (userData.points === prevPoints) {
-      rank = prevRank;
+    if (prevPoints === null || userData.points < prevPoints) {
+      rank = prevRank + skip;
+      skip = 1;
     } else {
-      rank = i + 1;
-      prevPoints = userData.points;
-      prevRank = rank;
+      rank = prevRank;
+      skip++;
     }
+    prevPoints = userData.points;
+    prevRank = rank;
+
     if (userData.nick === data.nick) {
       rankEl.textContent = rank;
       break;
@@ -75,6 +96,9 @@ onAuthStateChanged(auth, async (user) => {
 <h1>Привет, <span id="nick"></span>!</h1>
 <p>Баллы: <span id="points"></span></p>
 <p>Место: <span id="rank"></span></p>
+
+<div id="checkBtnContainer"></div>
+
 <button id="leaderboardBtn">Лидерборд</button>
 </body>
 </html>
