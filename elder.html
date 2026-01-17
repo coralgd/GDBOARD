@@ -58,3 +58,37 @@ onAuthStateChanged(auth, async (user) => {
       ${nick} — <input type="number" value="${points}" style="width:50px;">
       <button class="changePoints">Изменить баллы</button>
       <button class="toggleModer">${userRole==="moderator"?"Снять модерку":"Назначить модером"}</button>
+      <button class="toggleVerified">${situation==="verified"?"Снять верификацию":"Верифицировать"}</button>
+    `;
+
+    const input = li.querySelector("input");
+
+    li.querySelector(".changePoints").addEventListener("click", async () => {
+      await updateDoc(doc(db, "users", docItem.id), { points: Number(input.value) });
+      alert("Баллы обновлены!");
+    });
+
+    li.querySelector(".toggleModer").addEventListener("click", async () => {
+      const newRole = userRole === "moderator" ? "player" : "moderator";
+      await updateDoc(doc(db, "users", docItem.id), { role: newRole });
+      alert("Роль обновлена!");
+      location.reload();
+    });
+
+    li.querySelector(".toggleVerified").addEventListener("click", async () => {
+      const newSituation = situation === "verified" ? "not requested" : "verified";
+      await updateDoc(doc(db, "users", docItem.id), { situation: newSituation });
+      alert("Ситуация обновлена!");
+      location.reload();
+    });
+
+    usersList.appendChild(li);
+  });
+});
+</script>
+</head>
+<body>
+<h1>Панель старшего модератора</h1>
+<ul id="usersList"></ul>
+</body>
+</html>
