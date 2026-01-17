@@ -3,69 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <title>Панель модератора</title>
-<link rel="stylesheet" href="style.css">
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs, doc, updateDoc, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
-  authDomain: "gdboard-add4a.firebaseapp.com",
-  projectId: "gdboard-add4a",
-  storageBucket: "gdboard-add4a.firebasestorage.app",
-  messagingSenderId: "883125028740",
-  appId: "1:883125028740:web:c504de4139943b8606bfd1"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-const usersList = document.getElementById("usersList");
-
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return window.location.href = "index.html";
-
-  const currentUserRef = doc(db, "users", user.uid);
-  const currentUserSnap = await getDoc(currentUserRef);
-  if (!currentUserSnap.exists()) return window.location.href = "index.html";
-
-  const currentData = currentUserSnap.data();
-  const role = currentData.role || "player";
-
-  if (role !== "moderator" && role !== "elder") {
-    alert("Нет доступа к панели модератора!");
-    return window.location.href = "main.html";
-  }
-
-  const usersRef = collection(db, "users");
-  const q = query(usersRef, where("situation", "==", "verified"), orderBy("points", "desc"));
-  const snapshot = await getDocs(q);
-
-  usersList.innerHTML = "";
-
-  snapshot.forEach(docItem => {
-    const u = docItem.data();
-    if (u.role === "moderator" || u.role === "elder") return;
-
-    const li = document.createElement("li");
-    li.innerHTML = `${u.nick || "Не указан"} — <input type="number" value="${u.points}" style="width:50px;">
-      <button class="changePoints">Изменить</button>`;
-
-    const input = li.querySelector("input");
-    li.querySelector(".changePoints").addEventListener("click", async () => {
-      await updateDoc(doc(db, "users", docItem.id), { points: Number(input.value) });
-      alert("Баллы обновлены!");
-    });
-
-    usersList.appendChild(li);
-  });
-});
-</script>
+<style>
+body{margin:0;padding:20px;font-family:'Orbitron',sans-serif;background:#0b0c10;color:#00f0ff;display:flex;flex-direction:column;align-items:center;}
+h1{font-size:2.5em;text-shadow:0 0 10px #00f0ff;margin-bottom:25px;}
+#usersList{width:95%;max-width:900px;display:flex;flex-direction:column;gap:12px;}
+.user-card{display:grid;grid-template-columns:3fr 2fr 2fr;padding:12px 15px;border-radius:10px;background:rgba(0,0,0,0.55);border:1px solid rgba(0,255,255,0.2);box-shadow:0 2px 10px rgba(0,255,255,0.2);transition:all 0.3s;opacity:0;transform:translateY(-20px);}
+.user-card.show{opacity:1;transform:translateY(0);}
+.user-card:hover{transform:translateY(-2px) scale(1.02);}
+input.points-input{width:80%;padding:6px;border-radius:5px;border:none;background:#0b0c10;color:#00f0ff;outline:1px solid #00f0ff;}
+button.change-btn{padding:6px 10px;border:none;border-radius:6px;background:#00a0ff;color:#000;font-weight:bold;cursor:pointer;transition:0.3s;}
+button.change-btn:hover{background:#00f0ff;box-shadow:0 0 10px #00f0ff;color:#000;}
+.error{color:#ff5555;margin-top:10px;text-align:center;}
+</style>
 </head>
 <body>
 <h1>Панель модератора</h1>
-<ul id="usersList"></ul>
+<div id="usersList"></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+const firebaseConfig = {/* твой config */};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const usersList=document.getElementById('usersList');
+
+onAuthStateChanged(auth, async user=>{
+  if(!user) return window.location.href='index.html';
+  const userSnap = await getDoc(doc(db,'users',user.uid));
+  if(!userSnap.exists()) return window.location.href='index.html';
+  const data=userSnap.data();
+  if(data.role!=='moderator' && data.role!=='elder') return window.location.href='main.html';
+
+  const usersRef=collection(db,'users');
+  const snapshot=await getDocs(usersRef);
+  const usersArr=snapshot.docs.filter(d=>d.data().role==='player' && d.data().situation==='verified').map(d=>({id:d.id,...d.data()}));
+
+  usersArr.forEach((u,index)=>{
+    const card=document.createElement('div');
+    card.classList.add('user-card');
+    setTimeout(()=>card.classList.add('show'),index*80);
+    card.innerHTML=`
+      <div>${u.nick||'Не указан'}</div>
+      <div><input type="number" class="points-input" value="${u.points||0}"></div>
+      <div><button class="change-btn">Изменить</button></div>
+    `;
+    const btn=card.querySelector('.change-btn');
+    const input=card.querySelector('.points-input');
+    btn.addEventListener('click',async ()=>{
+      await updateDoc(doc(db,'users',u.id),{points:parseInt(input.value)});
+      btn.textContent='Готово';
+      setTimeout(()=>btn.textContent='Изменить',1000);
+    });
+    usersList.appendChild(card);
+  });
+});
+</script>
 </body>
 </html>
