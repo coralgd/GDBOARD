@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Вход / Регистрация</title>
+<link rel="stylesheet" href="style.css">
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
@@ -32,13 +33,11 @@ regForm.addEventListener("submit", async (e) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const uid = userCredential.user.uid;
-    // Создаём пользователя с дефолтными полями
     await setDoc(doc(db, "users", uid), {
       points: 0,
       situation: "not requested",
       role: "player"
     });
-    // Перенаправляем на страницу nick.html для ввода ника
     window.location.href = "nick.html";
   } catch (err) {
     alert("Ошибка регистрации: " + err.message);
