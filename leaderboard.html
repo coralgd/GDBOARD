@@ -1,55 +1,86 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
+  <title>Лидерборд</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <canvas id="hud-bg"></canvas>
-<div class="panel" id="list"></div>
+
+<div class="panel">
+  <h2>Лидерборд</h2>
+  <div class="table">
+    <div class="row header">
+      <div>Место</div>
+      <div>Ник</div>
+      <div>Баллы</div>
+      <div>Роль</div>
+    </div>
+    <div id="board"></div>
+  </div>
+</div>
 
 <script type="module">
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { collection, query, orderBy, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 onAuthStateChanged(auth, async user => {
   if(!user) location.href="index.html";
-  const me = (await getDoc(doc(db,"users",user.uid))).data();
-  if(me.situation!=="verified") location.href="nick.html";
 
-  const snap = await getDocs(query(collection(db,"users"), orderBy("points","desc")));
+  const boardContainer = document.getElementById("board");
+  boardContainer.innerHTML = "";
 
-  let place = 0;
+  // Получаем всех VERIFIED
+  const q = query(
+    collection(db,"users"),
+    where("situation","==","verified"),
+    orderBy("points","desc")
+  );
+
+  const snapshot = await getDocs(q);
+
   let lastPoints = null;
-  let realPlace = 0;
+  let place = 0;
+  let skip = 1; // для одинаковых баллов
 
-  snap.forEach(d=>{
-    const u = d.data();
-    realPlace++;
-    if(u.points!==lastPoints){
-      place = realPlace;
-      lastPoints = u.points;
+  snapshot.docs.forEach((docSnap, idx) => {
+    const data = docSnap.data();
+    let displayPlace;
+
+    if(lastPoints === data.points){
+      // одинаковое место
+      displayPlace = place;
+      skip++;
+    } else {
+      place += skip;
+      displayPlace = place;
+      skip = 1;
+      lastPoints = data.points;
     }
 
-    const row=document.createElement("div");
-    row.className="row";
+    const row = document.createElement("div");
+    row.classList.add("row");
 
-    let roleText="";
-    if(u.role==="moderator") roleText="Модер";
-    if(u.role==="elder") roleText="Старший модер";
+    // Цвета и роль
+    let roleDisplay = "";
+    let roleColor = "#ccc";
+    if(data.role==="moderator") roleDisplay="Модер", roleColor="#ffdd57";
+    if(data.role==="elder") roleDisplay="Старший модер", roleColor="#ff5555";
 
-    row.innerHTML=`
-      <div>${place}</div>
-      <div>${u.nick||"(no nick)"}</div>
-      <div>${u.points}</div>
-      <div>${roleText}</div>
+    // Ник текущего пользователя
+    let nickDisplay = data.nick;
+    if(docSnap.id === user.uid) nickDisplay = `<span style="color:#00cfff">${data.nick}</span>`;
+
+    row.innerHTML = `
+      <div>${displayPlace}</div>
+      <div>${nickDisplay}</div>
+      <div>${data.points}</div>
+      <div style="color:${roleColor}">${roleDisplay}</div>
     `;
 
-    if(d.id===user.uid) row.style.color="#00d8ff";
-    if(u.role==="elder") row.style.color="#ff5555";
-    if(u.role==="moderator") row.style.color="#ffaa00";
-
-    list.append(row);
+    boardContainer.appendChild(row);
   });
 });
 </script>
