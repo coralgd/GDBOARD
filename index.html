@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>GDBoard – Вход/Регистрация</title>
+  <title>GDBoard - Вход/Регистрация</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <canvas id="hud-bg"></canvas>
 
-<div class="panel metal-panel">
+<div class="panel">
   <h2>Вход / Регистрация</h2>
   <div class="row">
     <input type="email" id="email" placeholder="Почта">
     <input type="password" id="password" placeholder="Пароль">
   </div>
   <div class="row actions">
-    <button id="loginBtn" class="hud-btn">Войти</button>
-    <button id="registerBtn" class="hud-btn">Регистрация</button>
+    <button id="loginBtn">Войти</button>
+    <button id="registerBtn">Регистрация</button>
   </div>
-  <p id="status" style="color:red; text-align:center;"></p>
+  <p id="status" style="color:red"></p>
 </div>
 
 <script type="module">
@@ -30,42 +30,47 @@ const emailInput = document.getElementById("email");
 const passInput = document.getElementById("password");
 const status = document.getElementById("status");
 
-// Вход
 document.getElementById("loginBtn").onclick = async () => {
   try {
     const cred = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
+    console.log("Успешный вход");
+
     const ref = doc(db,"users",cred.user.uid);
     const snap = await getDoc(ref);
     const data = snap.data();
+
     if(!data || data.situation==="not requested"){
       location.href="nick.html";
     } else {
       location.href="main.html";
     }
+
   } catch(e){
     console.error(e);
     status.innerText = e.message;
   }
 };
 
-// Регистрация
 document.getElementById("registerBtn").onclick = async () => {
   try {
     const cred = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
+    console.log("Регистрация успешна");
+
     await setDoc(doc(db,"users",cred.user.uid),{
       nick:"",
       points:0,
       situation:"not requested",
       role:"player"
     });
+
     location.href="nick.html";
+
   } catch(e){
     console.error(e);
     status.innerText = e.message;
   }
 };
 </script>
-
 <script src="hudBackground.js"></script>
 </body>
 </html>
