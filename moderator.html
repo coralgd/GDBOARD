@@ -1,41 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
+  <title>GDBoard - Панель Модератора</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <canvas id="hud-bg"></canvas>
 
-<div class="panel" id="list"></div>
+<div class="panel" id="list">
+  <h2>Панель Модератора</h2>
+</div>
 
 <script type="module">
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 onAuthStateChanged(auth, async user => {
-  if (!user) location.href="login.html";
-  const me = await getDoc(doc(db,"users",user.uid));
-  if (me.data().role !== "moderator" && me.data().role !== "elder") location.href="main.html";
+  if(!user) location.href="index.html";
 
-  const q = query(collection(db,"users"), where("situation","==","verified"));
-  const snap = await getDocs(q);
+  const meSnap = await getDoc(doc(db,"users",user.uid));
+  if(meSnap.data().role!=="moderator") location.href="main.html";
+
+  const snap = await getDocs(collection(db,"users"));
 
   snap.forEach(d=>{
     const u=d.data();
-    if(u.role==="moderator"||u.role==="elder")return;
+    if(u.role==="moderator"||u.role==="elder") return; // Модеров не показываем
 
     const row=document.createElement("div");
     row.className="row";
+
     row.innerHTML=`
-      <div>#</div>
-      <div>${u.nick}</div>
-      <input type="number" value="${u.points}">
-      <div class="actions">
-        <button>Изменить</button>
-      </div>
+      <div class="nick">${u.nick||"(no nick)"}</div>
+      <input type="number" class="pointsInput" value="${u.points||0}">
+      <button class="pointsBtn">Изменить</button>
     `;
-    row.querySelector("button").onclick=()=>updateDoc(d.ref,{points:+row.querySelector("input").value});
+
+    const pointsInput = row.querySelector(".pointsInput");
+    row.querySelector(".pointsBtn").onclick = async ()=>{
+      await updateDoc(d.ref,{points:+pointsInput.value});
+    };
+
     list.append(row);
   });
 });
