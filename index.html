@@ -10,28 +10,32 @@
 
 <div class="panel">
 
-  <h2>Вход / Регистрация</h2>
+  <!-- Единая металлическая карточка -->
+  <div class="card full-card">
+    <h2>Вход / Регистрация</h2>
 
-  <!-- Карточка с полями ввода -->
-  <div class="card input-card">
-    <input type="email" id="email" placeholder="Почта">
-    <input type="password" id="password" placeholder="Пароль">
+    <!-- Поля ввода -->
+    <div class="input-panel">
+      <input type="email" id="email" placeholder="Почта">
+      <input type="password" id="password" placeholder="Пароль">
+    </div>
+
+    <!-- Кнопки -->
+    <div class="button-panel">
+      <button id="loginBtn">Войти</button>
+      <button id="registerBtn">Регистрация</button>
+    </div>
+
+    <!-- Статус -->
+    <p id="status" style="color:red; text-align:center; margin-top:10px;"></p>
   </div>
-
-  <!-- Карточка с кнопками -->
-  <div class="card button-card">
-    <button id="loginBtn">Войти</button>
-    <button id="registerBtn">Регистрация</button>
-  </div>
-
-  <p id="status" style="color:red; text-align:center; margin-top:10px;"></p>
 
 </div>
 
 <script type="module">
 import { auth, db } from "./firebase.js";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const emailInput = document.getElementById("email");
 const passInput = document.getElementById("password");
