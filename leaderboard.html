@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Лидерборд</title>
+<link rel="stylesheet" href="style.css">
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
@@ -50,22 +51,20 @@ onAuthStateChanged(auth, async (user) => {
     const li = document.createElement("li");
     const points = userData.points || 0;
 
-    // Спортивная система рангов
     let rank;
     if (points === prevPoints) {
-      rank = prevRank; // одинаковое место для одинаковых баллов
+      rank = prevRank;
     } else {
-      rank = index + 1; // новое место = индекс + 1
+      rank = index + 1;
       prevPoints = points;
       prevRank = rank;
     }
 
-    // Формируем строку: Ник — Баллы — Роль
     let line = `${userData.nick || "Не указан"} — ${points}`;
     if (userData.role === "moderator") line += " Модер";
     if (userData.role === "elder") line += " Старший модер";
 
-    if (userData.id === user.uid) li.style.color = "blue";
+    if (userData.id === user.uid) li.classList.add("current");
 
     li.textContent = `${rank}. ${line}`;
     leaderboardList.appendChild(li);
