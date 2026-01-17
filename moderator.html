@@ -15,10 +15,8 @@ import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "https
 
 onAuthStateChanged(auth, async user => {
   if (!user) location.href="login.html";
-
   const me = await getDoc(doc(db,"users",user.uid));
-  if (me.data().role !== "moderator" && me.data().role !== "elder")
-    location.href="main.html";
+  if (me.data().role !== "moderator" && me.data().role !== "elder") location.href="main.html";
 
   const q = query(collection(db,"users"), where("situation","==","verified"));
   const snap = await getDocs(q);
