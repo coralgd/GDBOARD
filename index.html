@@ -2,25 +2,25 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Leaderboard</title>
+<title>Login</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
 <div class="app">
   <div class="panel">
-    <h1>Лидерборд</h1>
-    <div class="hud-line"></div>
-
-    <div class="list" id="list"></div>
+    <h1>Вход</h1>
+    <input id="email" placeholder="Email"><br><br>
+    <input id="pass" type="password" placeholder="Пароль"><br><br>
+    <button class="btn" onclick="login()">Войти</button>
+    <button class="btn" onclick="reg()">Регистрация</button>
   </div>
 </div>
 
 <script src="hudBackground.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
@@ -31,55 +31,20 @@ const app = initializeApp({
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const list = document.getElementById("list");
+window.login = () =>
+  signInWithEmailAndPassword(auth, email.value, pass.value)
+    .then(()=>location.href="main.html");
 
-onAuthStateChanged(auth, async user => {
-  if (!user) return location.href = "index.html";
-
-  const q = query(
-    collection(db, "users"),
-    where("situation", "==", "verified"),
-    orderBy("points", "desc")
-  );
-
-  const snap = await getDocs(q);
-
-  let place = 0;
-  let lastPoints = null;
-  let shown = 0;
-
-  snap.forEach(docu => {
-    const u = docu.data();
-    shown++;
-
-    if (u.points !== lastPoints) {
-      place = shown;
-      lastPoints = u.points;
-    }
-
-    const row = document.createElement("div");
-    row.className = "row" + (docu.id === user.uid ? " me" : "");
-
-    let roleClass = "";
-    let roleText = "";
-    if (u.role === "elder") {
-      roleClass = "role-elder";
-      roleText = "Старший модер";
-    } else if (u.role === "moderator") {
-      roleClass = "role-moderator";
-      roleText = "Модератор";
-    }
-
-    row.innerHTML = `
-      <div>${place}</div>
-      <div class="${roleClass}">${u.nick} ${roleText}</div>
-      <div>${u.points}</div>
-      <div></div>
-    `;
-
-    list.appendChild(row);
+window.reg = async () => {
+  const r = await createUserWithEmailAndPassword(auth, email.value, pass.value);
+  await setDoc(doc(db,"users",r.user.uid),{
+    email: email.value,
+    role: "player",
+    situation: "not requested",
+    points: 0
   });
-});
+  location.href="nick.html";
+};
 </script>
 </body>
 </html>
