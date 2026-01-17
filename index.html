@@ -10,19 +10,14 @@
 
 <div class="panel">
   <h2>Вход / Регистрация</h2>
-
-  <!-- Объединяем поля ввода и кнопки в один блок -->
   <div class="row">
     <input type="email" id="email" placeholder="Почта">
-  </div>
-  <div class="row">
     <input type="password" id="password" placeholder="Пароль">
   </div>
   <div class="row actions">
     <button id="loginBtn">Войти</button>
     <button id="registerBtn">Регистрация</button>
   </div>
-
   <p id="status" style="color:red"></p>
 </div>
 
@@ -38,6 +33,7 @@ const status = document.getElementById("status");
 document.getElementById("loginBtn").onclick = async () => {
   try {
     const cred = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
+    console.log("Успешный вход");
 
     const ref = doc(db,"users",cred.user.uid);
     const snap = await getDoc(ref);
@@ -58,6 +54,7 @@ document.getElementById("loginBtn").onclick = async () => {
 document.getElementById("registerBtn").onclick = async () => {
   try {
     const cred = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
+    console.log("Регистрация успешна");
 
     await setDoc(doc(db,"users",cred.user.uid),{
       nick:"",
