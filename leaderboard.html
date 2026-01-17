@@ -4,15 +4,124 @@
 <meta charset="UTF-8">
 <title>Лидерборд</title>
 <link rel="stylesheet" href="style.css">
+<style>
+/* Базовый светлый фон с градиентом */
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: 'Orbitron', sans-serif;
+  background: linear-gradient(160deg, #f0f2f5, #d0d6dd);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* Заголовок */
+h1 {
+  font-size: 2.5em;
+  margin-bottom: 20px;
+  color: #2c3e50;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Контейнер лидерборда */
+#leaderboard {
+  width: 90%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Карточка игрока */
+.table-row {
+  display: grid;
+  grid-template-columns: 1fr 3fr 2fr 2fr 2fr; /* Место | Ник | Баллы | Роль | Действия */
+  padding: 12px 15px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #ffffff, #e0e4e8);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  align-items: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.table-row:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+
+/* Текущий игрок */
+.current {
+  border-left: 5px solid #8e44ad;
+}
+
+/* Колонки */
+.table-row div {
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Роли */
+.role-player { color: #2c3e50; }       /* Игрок */
+.role-moderator { color: #e67e22; }   /* Модер */
+.role-elder { color: #c0392b; }       /* Старший модер */
+
+/* Кнопки действий */
+.table-row button {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #3498db;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.table-row button:hover {
+  background: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+/* Заголовок таблицы */
+.table-header {
+  display: grid;
+  grid-template-columns: 1fr 3fr 2fr 2fr 2fr;
+  padding: 12px 15px;
+  border-radius: 12px;
+  background: #3498db;
+  color: #fff;
+  font-weight: bold;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* Адаптив */
+@media screen and (max-width: 700px) {
+  .table-row, .table-header { grid-template-columns: 1fr 2fr 2fr 2fr; }
+  .table-row button { padding: 4px 8px; font-size: 0.8em; }
+}
+</style>
 </head>
 <body>
 <h1>Лидерборд</h1>
-<ol id="leaderboardList" style="list-style: none; padding-left: 0;"></ol>
+
+<div id="leaderboard">
+  <div class="table-header">
+    <div>Место</div>
+    <div>Ник</div>
+    <div>Баллы</div>
+    <div>Роль</div>
+    <div>Действия</div>
+  </div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs, doc, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { getFirestore, collection, query, orderBy, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
@@ -27,7 +136,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const leaderboardList = document.getElementById("leaderboardList");
+const leaderboardDiv = document.getElementById("leaderboard");
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) return window.location.href = "index.html";
@@ -42,50 +151,43 @@ onAuthStateChanged(auth, async (user) => {
   const q = query(usersRef, orderBy("points", "desc"));
   const snapshot = await getDocs(q);
 
-  // Сортировка и фильтр по verified для обычных игроков
   const usersArray = snapshot.docs.map(docItem => ({ id: docItem.id, ...docItem.data() }));
-  
-  leaderboardList.innerHTML = "";
 
-  // Вычисление рангов с одинаковыми баллами
-  let rank = 0;
+  // Вычисляем ранги с одинаковыми баллами
   let prevPoints = null;
+  let prevRank = 0;
   let skip = 1;
 
   usersArray.forEach((userData, index) => {
     const points = userData.points || 0;
     if (prevPoints === null || points < prevPoints) {
-      rank += skip;
+      prevRank += skip;
       skip = 1;
     } else {
       skip++;
     }
     prevPoints = points;
 
-    if (userData.situation !== "verified" && userData.role === "player") return; // обычные игроки не verified не показываем
+    // Игроки без верификации и обычные не показываем (для обычного игрока)
+    if (userData.situation !== "verified" && userData.role === "player") return;
 
-    const li = document.createElement("li");
-    let line = `${userData.nick || "Не указан"} — ${points}`;
+    const row = document.createElement("div");
+    row.classList.add("table-row");
+    if (userData.id === user.uid) row.classList.add("current");
 
-    if (userData.role === "moderator") line += " (Модер)";
-    if (userData.role === "elder") line += " (Старший модер)";
+    const roleClass = userData.role === "elder" ? "role-elder" : userData.role === "moderator" ? "role-moderator" : "role-player";
 
-    li.textContent = `${rank}. ${line}`;
+    // Кнопки действий (пока для примера)
+    const actionButton = `<button>Подробнее</button>`;
 
-    // Цвета по ролям
-    if (userData.id === user.uid) {
-      li.style.color = "#9b59b6"; // текущий игрок — фиолетовый
-      li.style.fontWeight = "bold";
-    } else if (userData.role === "elder") {
-      li.style.color = "#e74c3c"; // красный — старший модер
-      li.style.fontWeight = "bold";
-    } else if (userData.role === "moderator") {
-      li.style.color = "#f1c40f"; // желтый — модер
-    } else {
-      li.style.color = "#00ffcc"; // обычный игрок — голубой
-    }
-
-    leaderboardList.appendChild(li);
+    row.innerHTML = `
+      <div>${prevRank}</div>
+      <div>${userData.nick || "Не указан"}</div>
+      <div>${points}</div>
+      <div class="${roleClass}">${userData.role === "elder" ? "Старший модер" : userData.role === "moderator" ? "Модер" : "Игрок"}</div>
+      <div>${actionButton}</div>
+    `;
+    leaderboardDiv.appendChild(row);
   });
 });
 </script>
