@@ -2,28 +2,23 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Вход</title>
+<title>Nick</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
 <div class="app">
   <div class="panel">
-    <h1>Авторизация</h1>
-
-    <input id="email" placeholder="Email"><br><br>
-    <input id="password" type="password" placeholder="Пароль"><br><br>
-
-    <button class="btn" id="login">Войти</button>
-    <button class="btn" id="register">Регистрация</button>
+    <h1>Ник</h1>
+    <input id="nick" placeholder="Введите ник"><br><br>
+    <button class="btn" id="send">Отправить</button>
   </div>
 </div>
 
 <script src="hudBackground.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
@@ -34,21 +29,16 @@ const app = initializeApp({
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-login.onclick = async () => {
-  await signInWithEmailAndPassword(auth, email.value, password.value);
-  location.href = "main.html";
-};
-
-register.onclick = async () => {
-  const res = await createUserWithEmailAndPassword(auth, email.value, password.value);
-  await setDoc(doc(db, "users", res.user.uid), {
-    email: email.value,
-    role: "player",
-    situation: "not requested",
-    points: 0
-  });
-  location.href = "nick.html";
-};
+onAuthStateChanged(auth,u=>{
+  if(!u) location.href="index.html";
+  send.onclick=async()=>{
+    await updateDoc(doc(db,"users",u.uid),{
+      nick: nick.value,
+      situation: "requested"
+    });
+    alert("Ник отправлен");
+  };
+});
 </script>
 </body>
 </html>
