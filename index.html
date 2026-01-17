@@ -4,14 +4,65 @@
   <meta charset="UTF-8">
   <title>GDBoard - Вход/Регистрация</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
+      background: #111; /* Темный фон для контраста с HUD */
+    }
+    #hud-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0; /* Фон позади */
+    }
+    .panel {
+      position: relative;
+      z-index: 1; /* Карточка поверх фона */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+    .card.hud-card {
+      width: 500px;
+      height: 400px;
+      background: linear-gradient(145deg, #1e1e1e, #2b2b2b); /* Металлический градиент */
+      border: 2px solid #00aaff;
+      border-radius: 20px;
+      box-shadow: 0 0 20px #00aaff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #00aaff;
+      font-size: 24px;
+      text-align: center;
+      position: relative;
+    }
+    /* Лёгкий блик посередине карточки */
+    .card.hud-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border-radius: 20px;
+      background: radial-gradient(circle at center, rgba(255,255,255,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
 <canvas id="hud-bg"></canvas>
 
 <div class="panel">
-  <!-- Единая HUD-карточка, как в лидерборде/панели модера -->
-  <div class="card hud-card" style="width: 500px; height: 400px; display: flex; justify-content: center; align-items: center;">
-    <span style="color:#00aaff; font-size:24px;">HUD-Карточка</span>
+  <!-- HUD-карточка -->
+  <div class="card hud-card">
+    HUD-Карточка
   </div>
 </div>
 
