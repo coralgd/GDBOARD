@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>GDBoard - Вход/Регистрация</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,18 +11,17 @@
   <div class="row">
     <input type="email" id="email" placeholder="Почта">
     <input type="password" id="password" placeholder="Пароль">
-  </div>
-  <div class="row actions">
-    <button id="loginBtn">Войти</button>
-    <button id="registerBtn">Регистрация</button>
+    <div class="actions">
+      <button id="loginBtn">Войти</button>
+      <button id="registerBtn">Регистрация</button>
+    </div>
   </div>
   <p id="status" style="color:red"></p>
 </div>
 
 <script type="module">
-import { auth, db } from "./firebase.js";
+import { auth } from "./firebase.js";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const emailInput = document.getElementById("email");
 const passInput = document.getElementById("password");
@@ -32,18 +29,9 @@ const status = document.getElementById("status");
 
 document.getElementById("loginBtn").onclick = async () => {
   try {
-    const cred = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
+    await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
     console.log("Успешный вход");
-
-    const ref = doc(db,"users",cred.user.uid);
-    const snap = await getDoc(ref);
-    const data = snap.data();
-
-    if(!data || data.situation==="not requested"){
-      location.href="nick.html";
-    } else {
-      location.href="main.html";
-    }
+    location.href="nick.html";
   } catch(e){
     console.error(e);
     status.innerText = e.message;
@@ -52,18 +40,9 @@ document.getElementById("loginBtn").onclick = async () => {
 
 document.getElementById("registerBtn").onclick = async () => {
   try {
-    const cred = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
+    await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
     console.log("Регистрация успешна");
-
-    await setDoc(doc(db,"users",cred.user.uid),{
-      nick:"",
-      points:0,
-      situation:"not requested",
-      role:"player"
-    });
-
     location.href="nick.html";
-
   } catch(e){
     console.error(e);
     status.innerText = e.message;
