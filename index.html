@@ -28,17 +28,17 @@ regForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const email = regForm.email.value;
   const password = regForm.password.value;
-  const nick = regForm.nick.value;
 
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const uid = userCredential.user.uid;
+    // Создаём пользователя с дефолтными полями
     await setDoc(doc(db, "users", uid), {
-      nick,
       points: 0,
       situation: "not requested",
       role: "player"
     });
+    // Перенаправляем на страницу nick.html для ввода ника
     window.location.href = "nick.html";
   } catch (err) {
     alert("Ошибка регистрации: " + err.message);
@@ -61,7 +61,6 @@ loginForm.addEventListener("submit", async (e) => {
 <body>
 <h1>Регистрация</h1>
 <form id="regForm">
-  <input name="nick" placeholder="Ник" required />
   <input name="email" type="email" placeholder="Email" required />
   <input name="password" type="password" placeholder="Пароль" required />
   <button>Зарегистрироваться</button>
