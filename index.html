@@ -4,77 +4,39 @@
   <meta charset="UTF-8">
   <title>GDBoard - Вход/Регистрация</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Временно делаем карточку большую и по центру */
+    .panel {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card.full-card {
+      width: 500px;
+      height: 400px;
+      background: linear-gradient(145deg, #1e1e1e, #2b2b2b);
+      border: 2px solid #00aaff;
+      border-radius: 20px;
+      box-shadow: 0 0 20px #00aaff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      color: #00aaff;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
 <canvas id="hud-bg"></canvas>
 
 <div class="panel">
-  <!-- Единая HUD-карточка -->
   <div class="card full-card">
-    <h2>Вход / Регистрация</h2>
-
-    <!-- Поля ввода -->
-    <div class="input-panel">
-      <input type="email" id="email" placeholder="Почта">
-      <input type="password" id="password" placeholder="Пароль">
-    </div>
-
-    <!-- Кнопки -->
-    <div class="button-panel">
-      <button id="loginBtn">Войти</button>
-      <button id="registerBtn">Регистрация</button>
-    </div>
-
-    <!-- Статус -->
-    <p id="status" style="color:red; text-align:center; margin-top:10px;"></p>
+    <!-- Пустая большая карточка для HUD -->
+    HUD-Карточка
   </div>
 </div>
-
-<script type="module">
-import { auth, db } from "./firebase.js";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const emailInput = document.getElementById("email");
-const passInput = document.getElementById("password");
-const status = document.getElementById("status");
-
-document.getElementById("loginBtn").onclick = async () => {
-  try {
-    const cred = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
-    const ref = doc(db,"users",cred.user.uid);
-    const snap = await getDoc(ref);
-    const data = snap.data();
-
-    if(!data || data.situation==="not requested"){
-      location.href="nick.html";
-    } else {
-      location.href="main.html";
-    }
-
-  } catch(e){
-    console.error(e);
-    status.innerText = e.message;
-  }
-};
-
-document.getElementById("registerBtn").onclick = async () => {
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
-    await setDoc(doc(db,"users",cred.user.uid),{
-      nick:"",
-      points:0,
-      situation:"not requested",
-      role:"player"
-    });
-    location.href="nick.html";
-
-  } catch(e){
-    console.error(e);
-    status.innerText = e.message;
-  }
-};
-</script>
 
 <script src="hudBackground.js"></script>
 </body>
