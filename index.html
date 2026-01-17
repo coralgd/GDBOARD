@@ -11,17 +11,11 @@
 <div class="panel">
   <h2>Вход / Регистрация</h2>
 
-  <!-- Поля для ввода -->
-  <div class="row inputs">
-    <input type="email" id="email" placeholder="Почта">
-    <input type="password" id="password" placeholder="Пароль">
-  </div>
-
-  <!-- Отдельная панель для кнопок -->
-  <div class="row actions-panel">
-    <button id="loginBtn">Войти</button>
-    <button id="registerBtn">Регистрация</button>
-  </div>
+  <!-- Поля ввода + кнопки в одной карточке -->
+  <input type="email" id="email" placeholder="Почта">
+  <input type="password" id="password" placeholder="Пароль">
+  <button id="loginBtn">Войти</button>
+  <button id="registerBtn">Регистрация</button>
 
   <p id="status" style="color:red"></p>
 </div>
@@ -29,7 +23,7 @@
 <script type="module">
 import { auth, db } from "./firebase.js";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const emailInput = document.getElementById("email");
 const passInput = document.getElementById("password");
@@ -38,8 +32,6 @@ const status = document.getElementById("status");
 document.getElementById("loginBtn").onclick = async () => {
   try {
     const cred = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
-    console.log("Успешный вход");
-
     const ref = doc(db,"users",cred.user.uid);
     const snap = await getDoc(ref);
     const data = snap.data();
@@ -59,17 +51,13 @@ document.getElementById("loginBtn").onclick = async () => {
 document.getElementById("registerBtn").onclick = async () => {
   try {
     const cred = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
-    console.log("Регистрация успешна");
-
     await setDoc(doc(db,"users",cred.user.uid),{
       nick:"",
       points:0,
       situation:"not requested",
       role:"player"
     });
-
     location.href="nick.html";
-
   } catch(e){
     console.error(e);
     status.innerText = e.message;
