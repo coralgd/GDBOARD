@@ -1,26 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Главная</title>
-  <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <canvas id="hud-bg"></canvas>
 
 <div class="panel">
   <h2>Главная</h2>
-
-  <div class="row"><div>Ваш ник:</div><div id="nick"></div></div>
-  <div class="row"><div>Баллы:</div><div id="points"></div></div>
-  <div class="row"><div>Место:</div><div id="place"></div></div>
-
-  <!-- Кнопки и проверки -->
-  <div class="row actions">
-    <button id="leaderboardBtn">Лидерборд</button>
-    <button id="checkBtn">Проверить</button>
-    <p id="checkStatus" style="color:red"></p>
+  <div id="myInfo" class="row">
+    <div>#</div>
+    <div id="nick"></div>
+    <div id="points"></div>
   </div>
+  <button onclick="location.href='leaderboard.html'">Лидерборд</button>
 </div>
 
 <script type="module">
@@ -28,29 +21,12 @@ import { auth, db } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-onAuthStateChanged(auth, async user => {
-  if(!user) return location.href="index.html";
-
-  const ref = doc(db,"users",user.uid);
-  const dataSnap = await getDoc(ref);
-  const data = dataSnap.data();
-
-  // Редирект если не верифицирован
-  if(data.situation !== "verified") location.href="nick.html";
-
-  document.getElementById("nick").innerText = data.nick;
-  document.getElementById("points").innerText = data.points;
-  document.getElementById("place").innerText = data.place;
-
-  document.getElementById("leaderboardBtn").onclick = () => location.href="leaderboard.html";
-
-  document.getElementById("checkBtn").onclick = () => {
-    if(data.role==="moderator" || data.role==="elder"){
-      location.href = (data.role==="elder" ? "elder.html" : "moderator.html");
-    } else {
-      document.getElementById("checkStatus").innerText = "Ошибка: модерки нет";
-    }
-  };
+onAuthStateChanged(auth, async user=>{
+  if(!user) location.href="index.html";
+  const me = await getDoc(doc(db,"users",user.uid));
+  if(me.data().situation!=="verified") location.href="nick.html";
+  document.getElementById("nick").innerText = me.data().nick;
+  document.getElementById("points").innerText = me.data().points + " баллов";
 });
 </script>
 <script src="hudBackground.js"></script>
