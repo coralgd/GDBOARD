@@ -20,14 +20,23 @@
 <script type="module">
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 onAuthStateChanged(auth, async user => {
-  if(!user) location.href="login.html";
+  if(!user) location.href="index.html";
 
   const ref = doc(db,"users",user.uid);
-  const data = (await getDoc(ref)).data();
+  const snap = await getDoc(ref);
+  if(!snap.exists()){
+    await setDoc(ref,{
+      nick:"",
+      points:0,
+      situation:"not requested",
+      role:"player"
+    });
+  }
 
+  const data = (await getDoc(ref)).data();
   if(data.situation==="requested") location.href="main.html";
 
   document.getElementById("sendNick").onclick = async () => {
